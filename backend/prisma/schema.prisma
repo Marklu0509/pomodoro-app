@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------
+// User Identity & Authentication
+// --------------------------------------
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String   @map("password_hash") // Stored safely
+  name          String?
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  settings      Settings?
+  tasks         Task[]
+  sessions      PomodoroSession[]
+
+  @@map("users") // Map to table name 'users' in DB
+}
+
+// --------------------------------------
+// User Preferences (1:1 with User)
+// --------------------------------------
+model Settings {
+  id                Int     @id @default(autoincrement())
+  userId            Int     @unique @map("user_id")
+  
+  // Timer Configurations (in minutes)
+  workDuration      Int     @default(25) @map("work_duration")
+  shortBreakDuration Int    @default(5) @map("short_break_duration")
+  longBreakDuration  Int    @default(15) @map("long_break_duration")
+  
+  // Auto-start toggles
+  autoStartBreaks   Boolean @default(false) @map("auto_start_breaks")
+  autoStartPomodoros Boolean @default(false) @map("auto_start_pomodoros")
+
+  user              User    @relation(fields: [userId], references: [id])
+
+  @@map("settings")
+}
+
+// --------------------------------------
+// Task Management
+// --------------------------------------
+model Task {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  title             String
+  description       String?
+  
+  // Progress tracking
+  estimatedPomodoros Int     @default(1) @map("estimated_pomodoros")
+  completedPomodoros Int     @default(0) @map("completed_pomodoros")
+  
+  isCompleted       Boolean  @default(false) @map("is_completed")
+  isArchived        Boolean  @default(false) @map("is_archived") // Soft delete
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user              User     @relation(fields: [userId], references: [id])
+  sessions          PomodoroSession[]
+
+  @@map("tasks")
+}
+
+// --------------------------------------
+// Pomodoro Sessions (Core Data)
+// --------------------------------------
+model PomodoroSession {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  taskId          Int?     @map("task_id") // Optional: Can focus without a specific task
+  
+  startTime       DateTime @default(now()) @map("start_time")
+  endTime         DateTime @map("end_time")
+  durationSeconds Int      @map("duration_seconds") // Actual focus time
+  
+  // Status: 'COMPLETED', 'ABANDONED'
+  status          String   @default("COMPLETED")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  user            User     @relation(fields: [userId], references: [id])
+  task            Task?    @relation(fields: [taskId], references: [id])
+
+  @@map("pomodoro_sessions")
+}

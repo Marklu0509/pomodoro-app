@@ -1,0 +1,36 @@
+version: '3.8'  # Optional, but good practice to specify version
+
+services:
+  # Service 1: PostgreSQL Database
+  # This is the primary data store for the application.
+  db:
+    image: postgres:15-alpine  # Uses the lightweight Alpine Linux version for smaller image size
+    container_name: pomodoro-db
+    restart: always            # Automatically restart container if it crashes or system reboots
+    environment:
+      # Credentials loaded from the .env file for security
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${DB_PORT}:5432"      # Maps host port (e.g., 5432) to container port (5432)
+    volumes:
+      - pg_data:/var/lib/postgresql/data   # Data Persistence: ensures data survives container restarts
+
+  # Service 2: pgAdmin (Database GUI)
+  # A web-based interface to manage PostgreSQL without writing CLI commands.
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pomodoro-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"              # Access via http://localhost:5050
+    depends_on:
+      - db                     # Ensures pgAdmin starts only after the database is initialized
+
+# Define named volumes
+volumes:
+  pg_data:                     # Named volume for persistent database storage
