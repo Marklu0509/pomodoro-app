@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import api from "../../utils/api"; 
-import { Task } from "../../types/task"; 
+import { Task } from "../types/task"; 
 import { useRouter } from "next/navigation";
 import Timer from "../components/Timer"; 
 import Navbar from "../components/Navbar"; 
