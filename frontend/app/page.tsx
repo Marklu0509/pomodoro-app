@@ -129,7 +129,7 @@ export default function AuthPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">password</label>
               <input
                 type="password"
                 value={password}

@@ -1,155 +1,234 @@
 // frontend/app/components/Timer.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../../utils/api";
+import { Settings } from "../types/setting";
 
 interface TimerProps {
   taskId: number;
   onSessionComplete: () => void;
 }
 
+// Define the 3 modes of the timer
+type TimerMode = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
+
 export default function Timer({ taskId, onSessionComplete }: TimerProps) {
-  // --- Configuration ---
-  // For testing, use 10 seconds. For production, change to 25 * 60 (1500).
-  const FOCUS_DURATION = 10; 
-
-  const [timeLeft, setTimeLeft] = useState(FOCUS_DURATION);
+  // --- State ---
+  const [mode, setMode] = useState<TimerMode>("WORK");
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // Default fallback
   const [isActive, setIsActive] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // --- Circle Progress Logic (The Math) ---
-  const radius = 45; // Radius of the circle
-  const circumference = 2 * Math.PI * radius; // 2 * π * r (approx 282.7)
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [sessionCount, setSessionCount] = useState(0); // Track pomodoros to trigger long break
   
-  // Calculate how much of the circle should be visible (0 to 1)
-  const progressPercentage = timeLeft / FOCUS_DURATION;
-  
-  // Calculate the offset:
-  // If time is full (100%), offset is 0 (full circle).
-  // If time is 0 (0%), offset is circumference (empty circle).
-  const strokeDashoffset = circumference * (1 - progressPercentage);
+  // Audio Refs (to prevent re-loading sounds on every render)
+  const tickAudioRef = useRef<HTMLAudioElement | null>(null);
+  const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // --- 1. Load Settings & Audio on Mount ---
+  useEffect(() => {
+    // Initialize Audio
+    tickAudioRef.current = new Audio("/sounds/tick.mp3");
+    alarmAudioRef.current = new Audio("/sounds/alarm.mp3");
+
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get("/settings");
+        const userSettings: Settings = res.data;
+        setSettings(userSettings);
+        
+        // Apply initial duration based on settings
+        if (userSettings) {
+           setTimeLeft(userSettings.workDuration * 60);
+           // Set volumes
+           if (tickAudioRef.current) tickAudioRef.current.volume = userSettings.tickVolume / 100;
+           if (alarmAudioRef.current) alarmAudioRef.current.volume = userSettings.notificationVolume / 100;
+        }
+      } catch (err) {
+        console.error("Failed to load settings in Timer", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // --- 2. Timer Logic (The Heartbeat) ---
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
+        setTimeLeft((prev) => prev - 1);
+        
+        // Play Tick Sound (if enabled and settings loaded)
+        if (settings?.tickingSound !== "none" && tickAudioRef.current) {
+            // Reset time to 0 to allow rapid replay
+            tickAudioRef.current.currentTime = 0; 
+            tickAudioRef.current.play().catch(() => {}); // Catch error if user hasn't interacted yet
+        }
       }, 1000);
     } else if (timeLeft === 0) {
-      setIsActive(false);
-      handleComplete();
+      // Time is up!
+      handleTimerComplete();
     }
 
     return () => clearInterval(interval);
-  }, [isActive, timeLeft]);
+  }, [isActive, timeLeft, settings]);
 
-  const toggleTimer = () => {
-    setIsActive(!isActive);
-  };
+  // --- 3. Handle Completion & Mode Switching ---
+  const handleTimerComplete = async () => {
+    setIsActive(false); // Stop timer first
+    
+    // Play Alarm
+    if (alarmAudioRef.current) {
+      alarmAudioRef.current.play().catch((e) => console.log("Audio play failed", e));
+    }
 
-  const resetTimer = () => {
-    setIsActive(false);
-    setTimeLeft(FOCUS_DURATION);
-  };
+    // If it was a WORK session, record it
+    if (mode === "WORK") {
+      try {
+        // Assume actual duration is what was set in settings
+        const duration = settings ? settings.workDuration * 60 : 25 * 60;
+        await api.post("/sessions", {
+          durationSeconds: duration,
+          taskId: taskId,
+        });
+        onSessionComplete(); // Refresh parent UI
+        
+        // Increment session count to decide Short vs Long break
+        const newSessionCount = sessionCount + 1;
+        setSessionCount(newSessionCount);
 
-  const handleComplete = async () => {
-    setIsSaving(true);
-    try {
-      await api.post("/sessions", {
-        durationSeconds: FOCUS_DURATION,
-        taskId: taskId,
-      });
-      alert("Pomodoro Completed! 🍅");
-      onSessionComplete();
-      setTimeLeft(FOCUS_DURATION);
-    } catch (error) {
-      console.error("Failed to save session:", error);
-      alert("Error saving session.");
-    } finally {
-      setIsSaving(false);
+        // Switch to Break
+        if (newSessionCount % 4 === 0) {
+            switchMode("LONG_BREAK");
+        } else {
+            switchMode("SHORT_BREAK");
+        }
+
+      } catch (error) {
+        console.error("Failed to save session", error);
+      }
+    } else {
+      // If it was a BREAK, switch back to WORK
+      switchMode("WORK");
     }
   };
 
+  // --- Helper: Switch Mode & Apply Settings ---
+  const switchMode = (newMode: TimerMode) => {
+    setMode(newMode);
+    
+    if (!settings) return;
+
+    // 1. Set Duration
+    let newDuration = 25 * 60;
+    if (newMode === "WORK") newDuration = settings.workDuration * 60;
+    else if (newMode === "SHORT_BREAK") newDuration = settings.shortBreakDuration * 60;
+    else if (newMode === "LONG_BREAK") newDuration = settings.longBreakDuration * 60;
+    
+    setTimeLeft(newDuration);
+
+    // 2. Check Auto-Start
+    // Only auto-start if the setting is enabled for the TARGET mode
+    let shouldAutoStart = false;
+    if (newMode === "WORK" && settings.autoStartPomodoros) shouldAutoStart = true;
+    if ((newMode === "SHORT_BREAK" || newMode === "LONG_BREAK") && settings.autoStartBreaks) shouldAutoStart = true;
+
+    if (shouldAutoStart) {
+        setIsActive(true);
+    } else {
+        setIsActive(false);
+    }
+  };
+
+  // --- UI Helpers ---
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Calculate Progress for Circle
+  const getTotalTime = () => {
+    if (!settings) return 25 * 60;
+    if (mode === "WORK") return settings.workDuration * 60;
+    if (mode === "SHORT_BREAK") return settings.shortBreakDuration * 60;
+    return settings.longBreakDuration * 60;
+  };
+  
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const totalTime = getTotalTime();
+  const progressPercentage = timeLeft / totalTime;
+  const strokeDashoffset = circumference * (1 - progressPercentage);
+
+  // Colors based on mode
+  const getColor = () => {
+    if (mode === "WORK") return "#ef4444"; // Red for focus
+    if (mode === "SHORT_BREAK") return "#3b82f6"; // Blue for break
+    return "#10b981"; // Green for long break
+  };
+
   return (
     <div className="mt-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-lg flex flex-col items-center">
       
-      {/* --- Progress Ring Container --- */}
-      <div className="relative w-48 h-48 mb-6">
-        {/* SVG Wrapper - Rotated -90deg so it starts from the top (12 o'clock) */}
-        <svg className="w-full h-full -rotate-270 -scale-x-100 transform" viewBox="0 0 100 100">
-          
-          {/* 1. Background Circle (Gray track) */}
-          <circle
-            cx="50"
-            cy="50"
-            r={radius}
-            fill="none"
-            stroke="#e5e7eb" // gray-200
-            strokeWidth="6"
-          />
+      {/* Mode Indicator */}
+      <div className="mb-4 px-3 py-1 rounded-full text-sm font-bold tracking-wide uppercase" 
+           style={{ backgroundColor: `${getColor()}20`, color: getColor() }}>
+        {mode.replace("_", " ")}
+      </div>
 
-          {/* 2. Progress Circle (Blue/Orange Indicator) */}
+      {/* Progress Ring */}
+      <div className="relative w-48 h-48 mb-6">
+        <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="6" />
           <circle
-            cx="50"
-            cy="50"
-            r={radius}
-            fill="none"
-            stroke={isActive ? "#3b82f6" : "#9ca3af"} // Blue when active, Gray when paused
-            strokeWidth="6"
-            strokeLinecap="round" // Rounded ends for the line
+            cx="50" cy="50" r={radius} fill="none" stroke={getColor()} strokeWidth="6" strokeLinecap="round"
             style={{
               strokeDasharray: circumference,
               strokeDashoffset: strokeDashoffset,
-              transition: "stroke-dashoffset 1s linear" // Smoothly animate the line movement
+              transition: "stroke-dashoffset 1s linear, stroke 0.5s ease"
             }}
           />
         </svg>
-
-        {/* --- Center Text (Time Display) --- */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-4xl font-mono font-bold tracking-wider ${
-            isActive ? "text-gray-800" : "text-gray-400"
-          }`}>
+          <span className="text-4xl font-mono font-bold text-gray-800">
             {formatTime(timeLeft)}
           </span>
           <span className="text-xs text-gray-400 mt-1 uppercase font-semibold">
-            {isActive ? "Focusing" : "Paused"}
+            {isActive ? "Running" : "Paused"}
           </span>
         </div>
       </div>
 
-      {/* --- Controls --- */}
+      {/* Controls */}
       <div className="flex gap-4 w-full px-4">
         <button
-          onClick={toggleTimer}
-          disabled={isSaving}
-          className={`flex-1 py-3 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 ${
-            isActive 
-              ? "bg-amber-400 hover:bg-amber-500 text-amber-900" 
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          onClick={() => setIsActive(!isActive)}
+          className="flex-1 py-3 rounded-xl font-bold text-white shadow-md transition-all active:scale-95"
+          style={{ backgroundColor: isActive ? "#f59e0b" : getColor() }}
         >
           {isActive ? "PAUSE" : "START"}
         </button>
-
         <button
-          onClick={resetTimer}
-          disabled={isSaving}
+          onClick={() => {
+             setIsActive(false);
+             // Reset to current mode's full duration
+             setTimeLeft(getTotalTime());
+          }}
           className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition-colors"
         >
           RESET
         </button>
       </div>
-      
-      {isSaving && <p className="text-sm text-blue-500 mt-2 font-medium animate-pulse">Saving...</p>}
+
+       {/* Quick Skip (Debug feature, mostly) */}
+       <button 
+         onClick={handleTimerComplete}
+         className="mt-4 text-xs text-gray-400 hover:text-gray-600 underline"
+       >
+         Skip (Test Finish)
+       </button>
     </div>
   );
 }
