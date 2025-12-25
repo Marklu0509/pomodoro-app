@@ -36,20 +36,37 @@ model User {
 }
 
 // --------------------------------------
-// User Preferences (1:1 with User)
+// User Preferences
 // --------------------------------------
 model Settings {
   id                Int     @id @default(autoincrement())
   userId            Int     @unique @map("user_id")
   
-  // Timer Configurations (in minutes)
+  // --- Timer Durations (Minutes) ---
   workDuration      Int     @default(25) @map("work_duration")
   shortBreakDuration Int    @default(5) @map("short_break_duration")
   longBreakDuration  Int    @default(15) @map("long_break_duration")
   
-  // Auto-start toggles
+  // --- Auto-start Toggles ---
   autoStartBreaks   Boolean @default(false) @map("auto_start_breaks")
   autoStartPomodoros Boolean @default(false) @map("auto_start_pomodoros")
+
+  // --- Sound & Volume ---
+  // Volume: 0 to 100
+  tickVolume        Int     @default(50) @map("tick_volume") 
+  notificationVolume Int    @default(70) @map("notification_volume") 
+  
+  // Sound Selection
+  backgroundSound   String  @default("none") @map("background_sound") // e.g., "white_noise", "rain", "none"
+  tickingSound      String  @default("classic") @map("ticking_sound") // e.g., "classic", "digital"
+  
+  // Alerts
+  alertAt25Percent  Boolean @default(false) @map("alert_at_25_percent") // Play sound at 25%, 50%, 75%?
+  
+  // --- System & UI ---
+  notificationsEnabled Boolean @default(true) @map("notifications_enabled") // Browser notifications
+  miniClockMode     Boolean @default(false) @map("mini_clock_mode") // Default visual mode
+  lockWindow        Boolean @default(false) @map("lock_window") // Prevent accidental closing/moving (if supported)
 
   user              User    @relation(fields: [userId], references: [id])
 
