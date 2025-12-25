@@ -8,12 +8,12 @@ import { useRouter } from "next/navigation";
 export default function AuthPage() {
   const router = useRouter();
   
-  // true = 登入模式, false = 註冊模式
+  // true = login mode, false = signup mode
   const [isLogin, setIsLogin] = useState(true);
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState(""); // 註冊時可以順便填名字 (選填)
+  const [name, setName] = useState(""); // username(optional)
   
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,36 +23,36 @@ export default function AuthPage() {
     setError("");
     setIsLoading(true);
 
-    // 根據模式決定打哪一支 API
+    // call api by the mode
     const endpoint = isLogin ? "/auth/login" : "/auth/signup";
 
     try {
-      // 準備傳送的資料
+      // data for sending
       const payload: any = {
         email: email,
         password: password,
       };
 
-      // 如果是註冊模式，且有填名字，就加進去
+      // signupmode
       if (!isLogin && name) {
         payload.name = name;
       }
 
       const response = await api.post(endpoint, payload);
 
-      // 成功後拿到 Token
+      // receiving token
       const token = response.data.accessToken;
       localStorage.setItem("token", token);
 
-      // 跳轉到儀表板
+      // move to dashboard
       router.push("/dashboard");
       
     } catch (err: any) {
       console.error("Auth Failed:", err);
       if (isLogin) {
-         setError("登入失敗：請檢查帳號密碼");
+         setError("Login failed; please check your email and password");
       } else {
-         setError("註冊失敗：此 Email 可能已被使用");
+         setError("sign up failed; the email has already been used");
       }
     } finally {
       setIsLoading(false);
@@ -63,7 +63,7 @@ export default function AuthPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
         
-        {/* --- ★ NEW: 頂部切換標籤 (Tabs) --- */}
+        {/* --- tabs--- */}
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => { setIsLogin(true); setError(""); }}
@@ -73,7 +73,7 @@ export default function AuthPage() {
                 : "bg-gray-50 text-gray-500 hover:bg-gray-100"
             }`}
           >
-            登入 (Sign In)
+            Sign In
           </button>
           <button
             onClick={() => { setIsLogin(false); setError(""); }}
@@ -83,13 +83,13 @@ export default function AuthPage() {
                 : "bg-gray-50 text-gray-500 hover:bg-gray-100"
             }`}
           >
-            註冊 (Sign Up)
+            Sign Up
           </button>
         </div>
 
         <div className="p-8">
           <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
-            {isLogin ? "歡迎回來" : "建立新帳號"}
+            {isLogin ? "Welcome back" : "create a new account"}
           </h2>
           
           {error && (
@@ -100,10 +100,10 @@ export default function AuthPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             
-            {/* 只有在註冊模式才顯示名字欄位 */}
+            {/* only signup mode has name field */}
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">暱稱 (選填)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">username</label>
                 <input
                   type="text"
                   value={name}
@@ -149,8 +149,8 @@ export default function AuthPage() {
               }`}
             >
               {isLoading 
-                ? "處理中..." 
-                : (isLogin ? "登入" : "註冊並登入")
+                ? "Processing" 
+                : (isLogin ? "log in " : "Sign up and Log in")
               }
             </button>
           </form>
