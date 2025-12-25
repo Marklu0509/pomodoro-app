@@ -1,182 +1,127 @@
-// frontend/app/dashboard/page.tsx
+// frontend/app/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import api from "../../utils/api"; 
-import { Task } from "../types/task"; 
+import { useState } from "react";
+import api from "../utils/api";
 import { useRouter } from "next/navigation";
-import Timer from "../components/Timer"; 
-import Navbar from "../components/Navbar"; 
 
-export default function DashboardPage() {
+export default function AuthPage() {
   const router = useRouter();
   
-  // --- State Management ---
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Toggle state: true = Login, false = Sign Up
+  const [isLogin, setIsLogin] = useState(true);
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // State for creating tasks
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskEstimate, setNewTaskEstimate] = useState(1);
-  const [isCreating, setIsCreating] = useState(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-  // State to track which task has an active timer
-  const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
+    // Determine the endpoint based on the toggle state
+    const endpoint = isLogin ? "/auth/login" : "/auth/signup";
 
-  // --- Helper Functions ---
-
-  // Function to fetch tasks from backend
-  const fetchTasks = async () => {
     try {
-      const response = await api.get("/tasks");
-      setTasks(response.data);
-    } catch (error) {
-      console.error("Failed to fetch tasks:", error);
-      // Optional: Redirect to login if error (e.g., 401 Unauthorized)
-      // router.push("/"); 
+      const response = await api.post(endpoint, {
+        email: email,
+        password: password,
+      });
+
+      // Both login and signup return an accessToken in our backend
+      const token = response.data.accessToken;
+      localStorage.setItem("token", token);
+
+      // Redirect to dashboard
+      router.push("/dashboard");
+      
+    } catch (err: any) {
+      console.error("Auth Failed:", err);
+      // Show different messages for Login vs Signup errors
+      if (isLogin) {
+         setError("Login failed. Check your email or password.");
+      } else {
+         // Usually 403 means email already taken
+         setError("Signup failed. Email might be already in use.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Run fetching on component mount
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  // Handle creating a new task
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-    
-    setIsCreating(true);
-    try {
-      const response = await api.post("/tasks", {
-        title: newTaskTitle,
-        estimatedPomodoros: newTaskEstimate,
-      });
-      // Add new task to the top of the list
-      setTasks([response.data, ...tasks]); 
-      
-      // Reset form
-      setNewTaskTitle("");
-      setNewTaskEstimate(1);
-    } catch (error) {
-      console.error("Failed to create task:", error);
-      alert("Failed to create task.");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  // Toggle timer visibility for a specific task
-  const toggleTimerForTask = (taskId: number) => {
-    if (activeTaskId === taskId) {
-      setActiveTaskId(null); // Close if already open
-    } else {
-      setActiveTaskId(taskId); // Open the clicked one
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 1. Navbar at the top (Full width) */}
-      <Navbar />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
+        
+        {/* Title changes based on mode */}
+        <h2 className="text-2xl font-bold mb-2 text-center text-gray-800">
+          {isLogin ? "Welcome Back" : "Create Account"}
+        </h2>
+        <p className="text-center text-gray-500 mb-6 text-sm">
+          {isLogin ? "Sign in to continue to Pomodoro" : "Join us and start focusing"}
+        </p>
+        
+        {error && (
+          <div className="bg-red-50 text-red-500 text-sm p-3 rounded-md mb-4 text-center border border-red-100">
+            {error}
+          </div>
+        )}
 
-      {/* 2. Main Content Area (Centered with padding) */}
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8">My Tasks</h1>
-
-          {/* Create Task Form */}
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8 border-l-4 border-blue-500">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Add New Task</h2>
-            <form onSubmit={handleCreateTask} className="flex gap-4 items-end">
-              <div className="flex-grow">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
-                <input 
-                  type="text" 
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                  required
-                />
-              </div>
-              <div className="w-24">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Est. 🍅</label>
-                <input 
-                  type="number" 
-                  min="1" 
-                  max="10"
-                  value={newTaskEstimate}
-                  onChange={(e) => setNewTaskEstimate(parseInt(e.target.value))}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={isCreating}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition-colors disabled:bg-gray-400"
-              >
-                {isCreating ? "Adding..." : "Add"}
-              </button>
-            </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition"
+              placeholder="name@example.com"
+              required
+              suppressHydrationWarning
+            />
           </div>
 
-          {/* Task List */}
-          {isLoading ? (
-            <p className="text-gray-500">Loading tasks...</p>
-          ) : (
-            <div className="grid gap-4">
-              {tasks.map((task) => (
-                <div 
-                  key={task.id} 
-                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-shadow"
-                >
-                  {/* Task Header */}
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800">{task.title}</h3>
-                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                        <span>Progress:</span>
-                        <span className="font-medium text-gray-700">
-                          {task.completedPomodoros} / {task.estimatedPomodoros} 🍅
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        task.isCompleted 
-                          ? "bg-green-100 text-green-700" 
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}>
-                        {task.isCompleted ? "Completed" : "In Progress"}
-                      </span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition"
+              placeholder="••••••••"
+              required
+              suppressHydrationWarning
+            />
+          </div>
 
-                      <button
-                        onClick={() => toggleTimerForTask(task.id)}
-                        className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                      >
-                        {activeTaskId === task.id ? "Close Timer" : "Start Focus"}
-                      </button>
-                    </div>
-                  </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full py-2 px-4 text-white font-semibold rounded-md transition duration-200 ${
+              isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {isLoading 
+              ? "Processing..." 
+              : (isLogin ? "Sign In" : "Sign Up")
+            }
+          </button>
+        </form>
 
-                  {/* Timer Component (Conditionally Rendered) */}
-                  {activeTaskId === task.id && (
-                    <Timer 
-                      taskId={task.id} 
-                      onSessionComplete={() => {
-                        fetchTasks(); 
-                        setActiveTaskId(null); 
-                      }} 
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Toggle Link */}
+        <div className="mt-6 text-center text-sm text-gray-600">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError(""); // Clear errors when switching
+            }}
+            className="font-semibold text-blue-600 hover:text-blue-500 hover:underline transition"
+          >
+            {isLogin ? "Sign up" : "Log in"}
+          </button>
         </div>
       </div>
     </div>
