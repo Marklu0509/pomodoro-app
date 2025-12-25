@@ -7,7 +7,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
   swcMinify: true,
-  disable: process.env.NODE_ENV === "development", // 在本地開發時不啟用 PWA，避免干擾
+  disable: process.env.NODE_ENV === "development", // not using PWA while local dev  mode
   workboxOptions: {
     disableDevLogs: true,
   },
