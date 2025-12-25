@@ -4,7 +4,7 @@ import { SettingsService } from './settings.service';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { GetUser } from '../auth/decorator/get-user.decorator';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 
 @UseGuards(JwtGuard) // ★ Protect all endpoints: Only logged-in users can access
 @Controller('settings')
