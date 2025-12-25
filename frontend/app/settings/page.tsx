@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import api from "../../utils/api";
 import Navbar from "../components/Navbar";
 import { useRouter } from "next/navigation";
-import { Settings } from "../../types/setting";
+import { Settings } from "../types/setting";
 
 export default function SettingsPage() {
   const router = useRouter();
