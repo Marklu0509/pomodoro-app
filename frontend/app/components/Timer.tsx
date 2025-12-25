@@ -13,22 +13,22 @@ interface TimerProps {
 type TimerMode = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
 export default function Timer({ taskId, onSessionComplete }: TimerProps) {
-  // --- State ---
+  // --- State Management ---
   const [mode, setMode] = useState<TimerMode>("WORK");
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
 
-  // --- Audio Refs ---
+  // --- Audio References ---
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const chimeAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // --- Wake Lock Ref ---
+  // --- Wake Lock Reference ---
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-  // Helper: Force Stop Audio immediately
+  // Helper: Force stop audio and reset playback time
   const stopAudio = (audio: HTMLAudioElement | null) => {
     if (audio) {
       audio.pause();
@@ -36,8 +36,24 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     }
   };
 
-  // 1. Initialization & Load Settings
+  // 5. Mini Window Logic
+  const openMiniWindow = () => {
+    const width = 350;
+    const height = 400;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    // Opens a new popup window with specific dimensions
+    window.open(
+      '/dashboard', 
+      'PomodoroMini', 
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,directories=no,status=no`
+    );
+  };
+
+  // 1. Initialization and Settings Loading
   useEffect(() => {
+    // Initialize standard sounds
     tickAudioRef.current = new Audio("/sounds/tick.mp3");
     chimeAudioRef.current = new Audio("/sounds/chime.mp3");
 
@@ -48,11 +64,14 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         setSettings(userSettings);
         
         if (userSettings) {
+           // Apply duration from settings
            setTimeLeft(userSettings.workDuration * 60);
            
+           // Apply volume settings
            if (tickAudioRef.current) tickAudioRef.current.volume = userSettings.tickVolume / 100;
            if (chimeAudioRef.current) chimeAudioRef.current.volume = userSettings.notificationVolume / 100;
 
+           // Dynamically load the selected alarm sound
            const soundFile = userSettings.alarmSoundString 
              ? `/sounds/alarm-${userSettings.alarmSoundString}.mp3` 
              : "/sounds/alarm-classic.mp3";
@@ -62,10 +81,10 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
              alarmAudioRef.current.volume = userSettings.notificationVolume / 100;
            }
 
-           // ★ FIX: Auto-open Mini Window if setting is enabled
+           // Check for Mini-Clock Mode preference
+           // Note: Browsers may block auto-opening windows without user interaction.
            if (userSettings.miniClockMode) {
-             // We use a small timeout to ensure the DOM is ready
-             setTimeout(() => openMiniWindow(), 500);
+             console.log("Mini mode enabled. Waiting for user interaction to open window.");
            }
         }
       } catch (err) {
@@ -75,7 +94,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     fetchSettings();
   }, []);
 
-  // 2. Wake Lock Logic
+  // 2. Screen Wake Lock (Prevent screen from sleeping)
   useEffect(() => {
     const requestWakeLock = async () => {
       if ('wakeLock' in navigator && isActive) {
@@ -94,11 +113,9 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
       }
     };
 
-    if (isActive) {
-      requestWakeLock();
-    } else {
-      releaseWakeLock();
-    }
+    if (isActive) requestWakeLock();
+    else releaseWakeLock();
+
     return () => { releaseWakeLock(); };
   }, [isActive]);
 
@@ -111,7 +128,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         setTimeLeft((prev) => {
           const nextTime = prev - 1;
 
-          // Chime logic
+          // Logic for 25% progress chime
           if (settings?.alertAt25Percent && mode === "WORK") {
             const total = settings.workDuration * 60;
             const p75 = Math.floor(total * 0.75);
@@ -126,14 +143,15 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
             }
           }
 
+          // Handle timer reaching zero
           if (nextTime <= 0) {
-            stopAudio(tickAudioRef.current); // Stop tick immediately
+            stopAudio(tickAudioRef.current); // Stop ticking immediately
             return 0;
           }
           return nextTime;
         });
 
-        // Play tick
+        // Play ticking sound
         if (timeLeft > 1 && settings?.tickingSound !== "none" && tickAudioRef.current) {
             tickAudioRef.current.currentTime = 0;
             tickAudioRef.current.play().catch(() => {}); 
@@ -147,22 +165,28 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, settings, mode]);
 
-  // 4. Handle Completion
+  // 4. Handle Timer Completion
   const handleTimerComplete = async () => {
+    // Play Alarm
     if (alarmAudioRef.current) {
       alarmAudioRef.current.currentTime = 0;
       alarmAudioRef.current.play().catch((e) => console.log("Audio play failed", e));
+      // Stop alarm automatically after 5 seconds
       setTimeout(() => stopAudio(alarmAudioRef.current), 5000);
     }
 
     if (mode === "WORK") {
       try {
         const duration = settings ? settings.workDuration * 60 : 25 * 60;
+        // Save session to backend
         await api.post("/sessions", { durationSeconds: duration, taskId: taskId });
+        
+        // Notify parent component to refresh task list
         onSessionComplete(); 
         const newCount = sessionCount + 1;
         setSessionCount(newCount);
 
+        // Switch to appropriate break
         if (newCount % 4 === 0) switchMode("LONG_BREAK");
         else switchMode("SHORT_BREAK");
 
@@ -170,10 +194,12 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         console.error("Failed to save session", error);
       }
     } else {
+      // Break is over, back to work
       switchMode("WORK");
     }
   };
 
+  // Helper: Switch Timer Mode
   const switchMode = (newMode: TimerMode) => {
     setMode(newMode);
     if (!settings) return;
@@ -185,6 +211,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     
     setTimeLeft(newDuration);
 
+    // Auto-start logic based on settings
     let shouldAutoStart = false;
     if (newMode === "WORK" && settings.autoStartPomodoros) shouldAutoStart = true;
     if ((newMode === "SHORT_BREAK" || newMode === "LONG_BREAK") && settings.autoStartBreaks) shouldAutoStart = true;
@@ -193,16 +220,16 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     else setIsActive(false);
   };
 
-  // ★ FIX: Pause Logic with Audio Stop
+  // Handler: Pause Button
   const handlePause = () => {
     setIsActive(!isActive);
     if (isActive) {
-        // User just clicked PAUSE
+        // User clicked pause, stop ticking immediately
         stopAudio(tickAudioRef.current);
     }
   };
 
-  // ★ FIX: Reset Logic with Audio Stop
+  // Handler: Reset Button
   const handleReset = () => {
     setIsActive(false);
     stopAudio(tickAudioRef.current);
@@ -210,21 +237,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     setTimeLeft(getTotalTime());
   };
 
-  // 5. Mini Window
-  const openMiniWindow = () => {
-    const width = 350;
-    const height = 400;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-    
-    window.open(
-      '/dashboard', 
-      'PomodoroMini', 
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,directories=no,status=no`
-    );
-  };
-
-  // Helpers
+  // --- UI Helpers ---
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -254,7 +267,9 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     <div className="mt-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-lg flex flex-col items-center relative group">
       
       {/* Mini Window Button */}
+      {/* IMPORTANT: type="button" prevents form submission causing page refresh */}
       <button 
+        type="button" 
         onClick={openMiniWindow}
         className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
         title="Open Mini Window"
@@ -293,16 +308,20 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Control Buttons */}
       <div className="flex gap-4 w-full px-4">
+        {/* IMPORTANT: type="button" is crucial here */}
         <button
+          type="button" 
           onClick={handlePause}
           className="flex-1 py-3 rounded-xl font-bold text-white shadow-md transition-all active:scale-95"
           style={{ backgroundColor: isActive ? "#f59e0b" : getColor() }}
         >
           {isActive ? "PAUSE" : "START"}
         </button>
+        {/* IMPORTANT: type="button" is crucial here */}
         <button
+          type="button" 
           onClick={handleReset}
           className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition-colors"
         >
@@ -310,6 +329,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </button>
       </div>
       
+       {/* Debug: Wake Lock Status */}
        {isActive && 'wakeLock' in navigator && (
          <div className="mt-2 text-[10px] text-gray-300">Screen Lock Active</div>
        )}
