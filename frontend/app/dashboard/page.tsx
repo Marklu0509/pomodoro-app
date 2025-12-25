@@ -1,159 +1,182 @@
-// frontend/app/page.tsx
+// frontend/app/dashboard/page.tsx
 "use client";
 
-import { useState } from "react";
-import api from "../utils/api";
+import { useEffect, useState } from "react";
+import api from "../../utils/api"; 
+import { Task } from "../types/task"; 
 import { useRouter } from "next/navigation";
+import Timer from "../components/Timer"; 
+import Navbar from "../components/Navbar"; 
 
-export default function AuthPage() {
+export default function DashboardPage() {
   const router = useRouter();
   
-  // true = 登入模式, false = 註冊模式
-  const [isLogin, setIsLogin] = useState(true);
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState(""); // 註冊時可以順便填名字 (選填)
-  
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  // --- State Management ---
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+  // State for creating tasks
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskEstimate, setNewTaskEstimate] = useState(1);
+  const [isCreating, setIsCreating] = useState(false);
 
-    // 根據模式決定打哪一支 API
-    const endpoint = isLogin ? "/auth/login" : "/auth/signup";
+  // State to track which task has an active timer
+  const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
 
+  // --- Helper Functions ---
+
+  // Function to fetch tasks from backend
+  const fetchTasks = async () => {
     try {
-      // 準備傳送的資料
-      const payload: any = {
-        email: email,
-        password: password,
-      };
-
-      // 如果是註冊模式，且有填名字，就加進去
-      if (!isLogin && name) {
-        payload.name = name;
-      }
-
-      const response = await api.post(endpoint, payload);
-
-      // 成功後拿到 Token
-      const token = response.data.accessToken;
-      localStorage.setItem("token", token);
-
-      // 跳轉到儀表板
-      router.push("/dashboard");
-      
-    } catch (err: any) {
-      console.error("Auth Failed:", err);
-      if (isLogin) {
-         setError("登入失敗：請檢查帳號密碼");
-      } else {
-         setError("註冊失敗：此 Email 可能已被使用");
-      }
+      const response = await api.get("/tasks");
+      setTasks(response.data);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+      // Optional: Redirect to login if error (e.g., 401 Unauthorized)
+      // router.push("/"); 
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Run fetching on component mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  // Handle creating a new task
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    
+    setIsCreating(true);
+    try {
+      const response = await api.post("/tasks", {
+        title: newTaskTitle,
+        estimatedPomodoros: newTaskEstimate,
+      });
+      // Add new task to the top of the list
+      setTasks([response.data, ...tasks]); 
+      
+      // Reset form
+      setNewTaskTitle("");
+      setNewTaskEstimate(1);
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      alert("Failed to create task.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Toggle timer visibility for a specific task
+  const toggleTimerForTask = (taskId: number) => {
+    if (activeTaskId === taskId) {
+      setActiveTaskId(null); // Close if already open
+    } else {
+      setActiveTaskId(taskId); // Open the clicked one
+    }
+  };
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
-        
-        {/* --- ★ NEW: 頂部切換標籤 (Tabs) --- */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => { setIsLogin(true); setError(""); }}
-            className={`flex-1 py-4 text-center font-semibold transition-colors ${
-              isLogin 
-                ? "bg-white text-blue-600 border-b-2 border-blue-600" 
-                : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            登入 (Sign In)
-          </button>
-          <button
-            onClick={() => { setIsLogin(false); setError(""); }}
-            className={`flex-1 py-4 text-center font-semibold transition-colors ${
-              !isLogin 
-                ? "bg-white text-blue-600 border-b-2 border-blue-600" 
-                : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            註冊 (Sign Up)
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* 1. Navbar at the top (Full width) */}
+      <Navbar />
 
-        <div className="p-8">
-          <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
-            {isLogin ? "歡迎回來" : "建立新帳號"}
-          </h2>
-          
-          {error && (
-            <div className="bg-red-50 text-red-500 text-sm p-3 rounded-md mb-4 text-center border border-red-100">
-              {error}
-            </div>
-          )}
+      {/* 2. Main Content Area (Centered with padding) */}
+      <div className="p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-800 mb-8">My Tasks</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* 只有在註冊模式才顯示名字欄位 */}
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">暱稱 (選填)</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Your Name"
-                  suppressHydrationWarning
+          {/* Create Task Form */}
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8 border-l-4 border-blue-500">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Add New Task</h2>
+            <form onSubmit={handleCreateTask} className="flex gap-4 items-end">
+              <div className="flex-grow">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
+                <input 
+                  type="text" 
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                  required
                 />
               </div>
-            )}
+              <div className="w-24">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Est. 🍅</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="10"
+                  value={newTaskEstimate}
+                  onChange={(e) => setNewTaskEstimate(parseInt(e.target.value))}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={isCreating}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition-colors disabled:bg-gray-400"
+              >
+                {isCreating ? "Adding..." : "Add"}
+              </button>
+            </form>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="name@example.com"
-                required
-                suppressHydrationWarning
-              />
+          {/* Task List */}
+          {isLoading ? (
+            <p className="text-gray-500">Loading tasks...</p>
+          ) : (
+            <div className="grid gap-4">
+              {tasks.map((task) => (
+                <div 
+                  key={task.id} 
+                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-shadow"
+                >
+                  {/* Task Header */}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800">{task.title}</h3>
+                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                        <span>Progress:</span>
+                        <span className="font-medium text-gray-700">
+                          {task.completedPomodoros} / {task.estimatedPomodoros} 🍅
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        task.isCompleted 
+                          ? "bg-green-100 text-green-700" 
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {task.isCompleted ? "Completed" : "In Progress"}
+                      </span>
+
+                      <button
+                        onClick={() => toggleTimerForTask(task.id)}
+                        className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                      >
+                        {activeTaskId === task.id ? "Close Timer" : "Start Focus"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Timer Component (Conditionally Rendered) */}
+                  {activeTaskId === task.id && (
+                    <Timer 
+                      taskId={task.id} 
+                      onSessionComplete={() => {
+                        fetchTasks(); 
+                        setActiveTaskId(null); 
+                      }} 
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">密碼</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="••••••••"
-                required
-                suppressHydrationWarning
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-3 px-4 text-white font-semibold rounded-md transition duration-200 mt-4 ${
-                isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isLoading 
-                ? "處理中..." 
-                : (isLogin ? "登入" : "註冊並登入")
-              }
-            </button>
-          </form>
+          )}
         </div>
       </div>
     </div>
