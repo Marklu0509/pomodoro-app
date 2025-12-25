@@ -1,4 +1,4 @@
-// src/sessions/sessions.service.ts
+// backend/src/sessions/sessions.service.ts
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -8,7 +8,7 @@ export class SessionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateSessionDto) {
-    // 1. Check Task ownership (Security)
+    // 1. Check Task ownership
     if (dto.taskId) {
       const task = await this.prisma.task.findUnique({
         where: { id: dto.taskId },
@@ -23,15 +23,13 @@ export class SessionsService {
       }
     }
 
-    // --- FIX STARTS HERE ---
-    // 2. Calculate Timestamps manually
-    const startTime = new Date(); // startTime = current time 
-    const endTime = new Date(startTime.getTime() + dto.durationSeconds * 1000); 
-    // --- FIX ENDS HERE ---
+    // 2. Calculate Timestamps
+    const startTime = new Date();
+    const endTime = new Date(startTime.getTime() + dto.durationSeconds * 1000);
 
     // 3. Database Transaction
     return this.prisma.$transaction(async (tx) => {
-      // Step A: Create session with calculated times
+      // Step A: Create session record
       const session = await tx.pomodoroSession.create({
         data: {
           userId,
@@ -42,9 +40,10 @@ export class SessionsService {
         },
       });
 
-      // Step B: Update task progress
+      // Step B: Update task progress & Check completion
       if (dto.taskId) {
-        await tx.task.update({
+        // First, increment the counter and get the updated task
+        const updatedTask = await tx.task.update({
           where: { id: dto.taskId },
           data: {
             completedPomodoros: {
@@ -52,6 +51,15 @@ export class SessionsService {
             },
           },
         });
+
+        // ★ FIX: Only mark as completed if we reached the goal
+        // (Use >= just in case it somehow went over)
+        if (updatedTask.completedPomodoros >= updatedTask.estimatedPomodoros) {
+          await tx.task.update({
+            where: { id: dto.taskId },
+            data: { isCompleted: true },
+          });
+        }
       }
 
       return session;

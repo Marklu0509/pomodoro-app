@@ -10,24 +10,22 @@ interface TimerProps {
   onSessionComplete: () => void;
 }
 
-// Define the 3 modes of the timer
 type TimerMode = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
 export default function Timer({ taskId, onSessionComplete }: TimerProps) {
-  // --- State ---
+  // State
   const [mode, setMode] = useState<TimerMode>("WORK");
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // Default fallback
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [sessionCount, setSessionCount] = useState(0); // Track pomodoros to trigger long break
-  
-  // Audio Refs (to prevent re-loading sounds on every render)
+  const [sessionCount, setSessionCount] = useState(0);
+
+  // Audio Refs
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // --- 1. Load Settings & Audio on Mount ---
+  // 1. Init
   useEffect(() => {
-    // Initialize Audio
     tickAudioRef.current = new Audio("/sounds/tick.mp3");
     alarmAudioRef.current = new Audio("/sounds/alarm.mp3");
 
@@ -36,70 +34,86 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         const res = await api.get("/settings");
         const userSettings: Settings = res.data;
         setSettings(userSettings);
-        
-        // Apply initial duration based on settings
         if (userSettings) {
            setTimeLeft(userSettings.workDuration * 60);
-           // Set volumes
            if (tickAudioRef.current) tickAudioRef.current.volume = userSettings.tickVolume / 100;
            if (alarmAudioRef.current) alarmAudioRef.current.volume = userSettings.notificationVolume / 100;
         }
       } catch (err) {
-        console.error("Failed to load settings in Timer", err);
+        console.error("Failed to load settings", err);
       }
     };
     fetchSettings();
   }, []);
 
-  // --- 2. Timer Logic (The Heartbeat) ---
+  // 2. Timer Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-        
-        // Play Tick Sound (if enabled and settings loaded)
-        if (settings?.tickingSound !== "none" && tickAudioRef.current) {
-            // Reset time to 0 to allow rapid replay
-            tickAudioRef.current.currentTime = 0; 
-            tickAudioRef.current.play().catch(() => {}); // Catch error if user hasn't interacted yet
+        setTimeLeft((prev) => {
+          // if next sec in 0
+          if (prev <= 1) {
+            // ★ FIX 1: Stop tick immediately when time hits 0
+            if (tickAudioRef.current) {
+                tickAudioRef.current.pause();
+                tickAudioRef.current.currentTime = 0;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+
+        // Play Tick (Only if time > 1 to avoid ticking at 00:00)
+        if (timeLeft > 1 && settings?.tickingSound !== "none" && tickAudioRef.current) {
+            tickAudioRef.current.currentTime = 0;
+            tickAudioRef.current.play().catch(() => {}); 
         }
       }, 1000);
-    } else if (timeLeft === 0) {
-      // Time is up!
+    } else if (timeLeft === 0 && isActive) {
+      // Time is officially up
+      setIsActive(false);
       handleTimerComplete();
     }
 
     return () => clearInterval(interval);
   }, [isActive, timeLeft, settings]);
 
-  // --- 3. Handle Completion & Mode Switching ---
+  // 3. Handle Complete
   const handleTimerComplete = async () => {
-    setIsActive(false); // Stop timer first
-    
-    // Play Alarm
+    // ★ FIX 2: Play Alarm for fixed 5 seconds
     if (alarmAudioRef.current) {
+      alarmAudioRef.current.currentTime = 0;
       alarmAudioRef.current.play().catch((e) => console.log("Audio play failed", e));
+      
+      // Stop after 5 seconds
+      setTimeout(() => {
+        if (alarmAudioRef.current) {
+            alarmAudioRef.current.pause();
+            alarmAudioRef.current.currentTime = 0;
+        }
+      }, 5000);
     }
 
-    // If it was a WORK session, record it
     if (mode === "WORK") {
+      // WORK FINISHED
       try {
-        // Assume actual duration is what was set in settings
         const duration = settings ? settings.workDuration * 60 : 25 * 60;
         await api.post("/sessions", {
           durationSeconds: duration,
           taskId: taskId,
         });
-        onSessionComplete(); // Refresh parent UI
         
-        // Increment session count to decide Short vs Long break
-        const newSessionCount = sessionCount + 1;
-        setSessionCount(newSessionCount);
+        // Notify parent to update task list (check completion)
+        onSessionComplete(); 
 
-        // Switch to Break
-        if (newSessionCount % 4 === 0) {
+        // Update Session Count
+        const newCount = sessionCount + 1;
+        setSessionCount(newCount);
+
+        // ★ FIX 4: Switch to Break (Logic Check)
+        if (newCount % 4 === 0) {
             switchMode("LONG_BREAK");
         } else {
             switchMode("SHORT_BREAK");
@@ -109,18 +123,17 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         console.error("Failed to save session", error);
       }
     } else {
-      // If it was a BREAK, switch back to WORK
+      // BREAK FINISHED -> Back to WORK
       switchMode("WORK");
     }
   };
 
-  // --- Helper: Switch Mode & Apply Settings ---
+  // 4. Mode Switcher
   const switchMode = (newMode: TimerMode) => {
     setMode(newMode);
     
     if (!settings) return;
 
-    // 1. Set Duration
     let newDuration = 25 * 60;
     if (newMode === "WORK") newDuration = settings.workDuration * 60;
     else if (newMode === "SHORT_BREAK") newDuration = settings.shortBreakDuration * 60;
@@ -128,27 +141,28 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     
     setTimeLeft(newDuration);
 
-    // 2. Check Auto-Start
-    // Only auto-start if the setting is enabled for the TARGET mode
+    // Auto-Start Logic
     let shouldAutoStart = false;
+    // If switching TO work, check autoStartPomodoros
     if (newMode === "WORK" && settings.autoStartPomodoros) shouldAutoStart = true;
+    // If switching TO break, check autoStartBreaks
     if ((newMode === "SHORT_BREAK" || newMode === "LONG_BREAK") && settings.autoStartBreaks) shouldAutoStart = true;
 
     if (shouldAutoStart) {
-        setIsActive(true);
+        // Small delay to ensure state updates
+        setTimeout(() => setIsActive(true), 100);
     } else {
         setIsActive(false);
     }
   };
 
-  // --- UI Helpers ---
+  // UI Helpers
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Calculate Progress for Circle
   const getTotalTime = () => {
     if (!settings) return 25 * 60;
     if (mode === "WORK") return settings.workDuration * 60;
@@ -162,23 +176,20 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   const progressPercentage = timeLeft / totalTime;
   const strokeDashoffset = circumference * (1 - progressPercentage);
 
-  // Colors based on mode
   const getColor = () => {
-    if (mode === "WORK") return "#ef4444"; // Red for focus
-    if (mode === "SHORT_BREAK") return "#3b82f6"; // Blue for break
-    return "#10b981"; // Green for long break
+    if (mode === "WORK") return "#ef4444";
+    if (mode === "SHORT_BREAK") return "#3b82f6";
+    return "#10b981"; 
   };
 
   return (
     <div className="mt-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-lg flex flex-col items-center">
       
-      {/* Mode Indicator */}
       <div className="mb-4 px-3 py-1 rounded-full text-sm font-bold tracking-wide uppercase" 
            style={{ backgroundColor: `${getColor()}20`, color: getColor() }}>
         {mode.replace("_", " ")}
       </div>
 
-      {/* Progress Ring */}
       <div className="relative w-48 h-48 mb-6">
         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="6" />
@@ -201,7 +212,6 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </div>
       </div>
 
-      {/* Controls */}
       <div className="flex gap-4 w-full px-4">
         <button
           onClick={() => setIsActive(!isActive)}
@@ -213,7 +223,6 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         <button
           onClick={() => {
              setIsActive(false);
-             // Reset to current mode's full duration
              setTimeLeft(getTotalTime());
           }}
           className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition-colors"
@@ -222,12 +231,12 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </button>
       </div>
 
-       {/* Quick Skip (Debug feature, mostly) */}
+      {/* Debug: Skip Button */}
        <button 
-         onClick={handleTimerComplete}
-         className="mt-4 text-xs text-gray-400 hover:text-gray-600 underline"
+         onClick={() => setTimeLeft(2)} 
+         className="mt-4 text-xs text-gray-300 hover:text-gray-500"
        >
-         Skip (Test Finish)
+         Test Finish (Set to 2s)
        </button>
     </div>
   );
