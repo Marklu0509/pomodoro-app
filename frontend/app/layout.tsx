@@ -1,28 +1,19 @@
 // frontend/app/layout.tsx
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+// 1. Remove "next/font/local" and import "next/font/google" instead
+import { Inter } from "next/font/google"; 
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+// 2. Configure the Google Font (Inter)
+const inter = Inter({ subsets: ["latin"] });
 
-// Define global metadata for the application
 export const metadata: Metadata = {
   title: "Pomodoro Focus",
   description: "Stay focused and productive with Pomodoro technique",
-  // ★ CRITICAL: Link to the manifest file so browsers detect the PWA
   manifest: "/manifest.json", 
   icons: {
-    icon: "/globe.svg", // Optional: explicit favicon link
-    apple: "/globe.svg", // Optional: icon for Apple devices
+    icon: "/globe.svg", 
+    apple: "/globe.svg", 
   },
 };
 
@@ -33,9 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      {/* 3. Apply the font class to the body */}
+      <body className={inter.className}>
         {children}
       </body>
     </html>
