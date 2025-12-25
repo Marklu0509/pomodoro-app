@@ -207,16 +207,6 @@ export default function SettingsPage() {
                 />
                 <span className="text-gray-700">Start in Mini-Clock Mode</span>
               </label>
-              
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settings.lockWindow}
-                  onChange={(e) => handleChange("lockWindow", e.target.checked)}
-                  className="h-5 w-5 text-blue-600"
-                />
-                <span className="text-gray-700">Lock Window Position (PWA only)</span>
-              </label>
             </div>
           </div>
 

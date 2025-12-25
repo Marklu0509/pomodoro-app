@@ -23,16 +23,23 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   // --- Audio Refs ---
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
-  const chimeAudioRef = useRef<HTMLAudioElement | null>(null); // 25% progress chime
+  const chimeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // --- Wake Lock Ref ---
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // Helper: Force Stop Audio immediately
+  const stopAudio = (audio: HTMLAudioElement | null) => {
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
 
   // 1. Initialization & Load Settings
   useEffect(() => {
     tickAudioRef.current = new Audio("/sounds/tick.mp3");
     chimeAudioRef.current = new Audio("/sounds/chime.mp3");
-    // We don't load alarm here immediately; we wait for settings to decide which file to load
 
     const fetchSettings = async () => {
       try {
@@ -43,11 +50,9 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         if (userSettings) {
            setTimeLeft(userSettings.workDuration * 60);
            
-           // Set volumes
            if (tickAudioRef.current) tickAudioRef.current.volume = userSettings.tickVolume / 100;
            if (chimeAudioRef.current) chimeAudioRef.current.volume = userSettings.notificationVolume / 100;
 
-           // ★ Dynamically load the user-selected alarm sound
            const soundFile = userSettings.alarmSoundString 
              ? `/sounds/alarm-${userSettings.alarmSoundString}.mp3` 
              : "/sounds/alarm-classic.mp3";
@@ -55,6 +60,12 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
            alarmAudioRef.current = new Audio(soundFile);
            if (alarmAudioRef.current) {
              alarmAudioRef.current.volume = userSettings.notificationVolume / 100;
+           }
+
+           // ★ FIX: Auto-open Mini Window if setting is enabled
+           if (userSettings.miniClockMode) {
+             // We use a small timeout to ensure the DOM is ready
+             setTimeout(() => openMiniWindow(), 500);
            }
         }
       } catch (err) {
@@ -64,13 +75,12 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     fetchSettings();
   }, []);
 
-  // 2. Screen Wake Lock Logic (Wake Lock API)
+  // 2. Wake Lock Logic
   useEffect(() => {
     const requestWakeLock = async () => {
       if ('wakeLock' in navigator && isActive) {
         try {
           wakeLockRef.current = await navigator.wakeLock.request('screen');
-          console.log('Screen Wake Lock active');
         } catch (err) {
           console.error('Wake Lock failed:', err);
         }
@@ -81,7 +91,6 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
       if (wakeLockRef.current) {
         await wakeLockRef.current.release();
         wakeLockRef.current = null;
-        console.log('Screen Wake Lock released');
       }
     };
 
@@ -90,8 +99,6 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     } else {
       releaseWakeLock();
     }
-
-    // Cleanup on unmount
     return () => { releaseWakeLock(); };
   }, [isActive]);
 
@@ -104,15 +111,13 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         setTimeLeft((prev) => {
           const nextTime = prev - 1;
 
-          // ★ Logic for 25% progress alert
+          // Chime logic
           if (settings?.alertAt25Percent && mode === "WORK") {
             const total = settings.workDuration * 60;
-            // Calculate key milestones (75%, 50%, 25%)
             const p75 = Math.floor(total * 0.75);
             const p50 = Math.floor(total * 0.50);
             const p25 = Math.floor(total * 0.25);
 
-            // If we hit this exact second, play the chime
             if (nextTime === p75 || nextTime === p50 || nextTime === p25) {
                if (chimeAudioRef.current) {
                  chimeAudioRef.current.currentTime = 0;
@@ -121,18 +126,14 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
             }
           }
 
-          // Handle countdown finish
           if (nextTime <= 0) {
-            if (tickAudioRef.current) {
-                tickAudioRef.current.pause();
-                tickAudioRef.current.currentTime = 0;
-            }
+            stopAudio(tickAudioRef.current); // Stop tick immediately
             return 0;
           }
           return nextTime;
         });
 
-        // Play ticking sound
+        // Play tick
         if (timeLeft > 1 && settings?.tickingSound !== "none" && tickAudioRef.current) {
             tickAudioRef.current.currentTime = 0;
             tickAudioRef.current.play().catch(() => {}); 
@@ -151,12 +152,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     if (alarmAudioRef.current) {
       alarmAudioRef.current.currentTime = 0;
       alarmAudioRef.current.play().catch((e) => console.log("Audio play failed", e));
-      setTimeout(() => {
-        if (alarmAudioRef.current) {
-            alarmAudioRef.current.pause();
-            alarmAudioRef.current.currentTime = 0;
-        }
-      }, 5000);
+      setTimeout(() => stopAudio(alarmAudioRef.current), 5000);
     }
 
     if (mode === "WORK") {
@@ -197,9 +193,25 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     else setIsActive(false);
   };
 
-  // 5. Mini Window Feature
+  // ★ FIX: Pause Logic with Audio Stop
+  const handlePause = () => {
+    setIsActive(!isActive);
+    if (isActive) {
+        // User just clicked PAUSE
+        stopAudio(tickAudioRef.current);
+    }
+  };
+
+  // ★ FIX: Reset Logic with Audio Stop
+  const handleReset = () => {
+    setIsActive(false);
+    stopAudio(tickAudioRef.current);
+    stopAudio(alarmAudioRef.current);
+    setTimeLeft(getTotalTime());
+  };
+
+  // 5. Mini Window
   const openMiniWindow = () => {
-    // Open a small window. Currently opening dashboard, could be a specific /mini route later
     const width = 350;
     const height = 400;
     const left = (window.screen.width - width) / 2;
@@ -212,7 +224,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     );
   };
 
-  // Helper Functions
+  // Helpers
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -241,7 +253,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   return (
     <div className="mt-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-lg flex flex-col items-center relative group">
       
-      {/* Mini Window Button (Top Right) */}
+      {/* Mini Window Button */}
       <button 
         onClick={openMiniWindow}
         className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -284,21 +296,20 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
       {/* Controls */}
       <div className="flex gap-4 w-full px-4">
         <button
-          onClick={() => setIsActive(!isActive)}
+          onClick={handlePause}
           className="flex-1 py-3 rounded-xl font-bold text-white shadow-md transition-all active:scale-95"
           style={{ backgroundColor: isActive ? "#f59e0b" : getColor() }}
         >
           {isActive ? "PAUSE" : "START"}
         </button>
         <button
-          onClick={() => { setIsActive(false); setTimeLeft(getTotalTime()); }}
+          onClick={handleReset}
           className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-semibold hover:bg-gray-200 transition-colors"
         >
           RESET
         </button>
       </div>
       
-       {/* Wake Lock Status (Debug, optional) */}
        {isActive && 'wakeLock' in navigator && (
          <div className="mt-2 text-[10px] text-gray-300">Screen Lock Active</div>
        )}
