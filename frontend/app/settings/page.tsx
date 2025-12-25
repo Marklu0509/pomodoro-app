@@ -157,6 +157,20 @@ export default function SettingsPage() {
               />
             </div>
 
+            {/* Alarm Sound Selection */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 mb-1">Alarm Sound</label>
+              <select
+                value={settings.alarmSoundString || "classic"} // Default fallback
+                onChange={(e) => handleChange("alarmSoundString", e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="classic">Classic Alarm</option>
+                <option value="digital">Digital Beep</option>
+                <option value="bird">Morning Birds</option>
+              </select>
+            </div>
+            
             {/* 25% Alert */}
             <label className="flex items-center gap-3 mb-4">
               <input

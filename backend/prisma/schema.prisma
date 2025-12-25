@@ -62,6 +62,7 @@ model Settings {
   
   // Alerts
   alertAt25Percent  Boolean @default(false) @map("alert_at_25_percent") // Play sound at 25%, 50%, 75%?
+  alarmSoundString  String  @default("classic") @map("alarm_sound")
   
   // --- System & UI ---
   notificationsEnabled Boolean @default(true) @map("notifications_enabled") // Browser notifications

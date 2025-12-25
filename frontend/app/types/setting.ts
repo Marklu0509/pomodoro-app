@@ -15,4 +15,5 @@ export interface Settings {
   notificationsEnabled: boolean;
   miniClockMode: boolean;
   lockWindow: boolean;
+  alarmSoundString: string;
 }
