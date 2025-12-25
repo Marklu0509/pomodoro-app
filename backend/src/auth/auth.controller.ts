@@ -1,23 +1,21 @@
-// backend/src/settings/settings.controller.ts
-import { Controller, Get, Body, Patch, UseGuards } from '@nestjs/common';
-import { SettingsService } from './settings.service';
-import { UpdateSettingDto } from './dto/update-setting.dto';
-import { JwtGuard } from '../auth/guard/jwt.guard';
-import { GetUser } from '../auth/decorator/get-user.decorator';
-import { User } from '@prisma/client';
+// src/auth/auth.controller.ts
+import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import { LoginDto } from './dto/login.dto';
 
-@UseGuards(JwtGuard) // ★ Protect all endpoints
-@Controller('settings')
-export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) {}
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
 
-  @Get()
-  findOne(@GetUser() user: User) {
-    return this.settingsService.findOne(user.id);
+  @Post('signup')
+  signup(@Body() createAuthDto: CreateAuthDto) {
+    return this.authService.signup(createAuthDto);
   }
 
-  @Patch()
-  update(@GetUser() user: User, @Body() updateSettingDto: UpdateSettingDto) {
-    return this.settingsService.update(user.id, updateSettingDto);
+  @HttpCode(HttpStatus.OK) // Return 200 OK instead of 201 Created for login
+  @Post('login')
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 }

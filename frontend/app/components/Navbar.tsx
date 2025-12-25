@@ -31,6 +31,13 @@ export default function Navbar() {
           Keep going!
         </span>
         
+        <button
+        onClick={() => router.push("/settings")}
+        className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2"
+        >
+        Settings
+        </button>
+        
         {/* Logout Button */}
         <button
           onClick={handleLogout}
