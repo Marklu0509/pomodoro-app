@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "../../utils/api"; 
-import { Task } from "../types/task"; 
+import api from "../../utils/api";
+import { Task } from "../../types/task"; 
 import { useRouter } from "next/navigation";
 import Timer from "../components/Timer"; 
 import Navbar from "../components/Navbar"; 
@@ -11,40 +11,30 @@ import Navbar from "../components/Navbar";
 export default function DashboardPage() {
   const router = useRouter();
   
-  // --- State Management ---
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // State for creating tasks
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskEstimate, setNewTaskEstimate] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  
+  // ★ 修改：activeTaskId 可以是 number (任務ID) 或 "FREE_MODE" (無任務) 或 null (沒在計時)
+  const [activeSessionMode, setActiveSessionMode] = useState<number | "FREE_MODE" | null>(null);
 
-  // State to track which task has an active timer
-  const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
-
-  // --- Helper Functions ---
-
-  // Function to fetch tasks from backend
   const fetchTasks = async () => {
     try {
       const response = await api.get("/tasks");
       setTasks(response.data);
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
-      // Optional: Redirect to login if error (e.g., 401 Unauthorized)
-      // router.push("/"); 
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Run fetching on component mount
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  // Handle creating a new task
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
@@ -55,10 +45,7 @@ export default function DashboardPage() {
         title: newTaskTitle,
         estimatedPomodoros: newTaskEstimate,
       });
-      // Add new task to the top of the list
       setTasks([response.data, ...tasks]); 
-      
-      // Reset form
       setNewTaskTitle("");
       setNewTaskEstimate(1);
     } catch (error) {
@@ -69,24 +56,55 @@ export default function DashboardPage() {
     }
   };
 
-  // Toggle timer visibility for a specific task
   const toggleTimerForTask = (taskId: number) => {
-    if (activeTaskId === taskId) {
-      setActiveTaskId(null); // Close if already open
+    if (activeSessionMode === taskId) {
+      setActiveSessionMode(null); // 關閉
     } else {
-      setActiveTaskId(taskId); // Open the clicked one
+      setActiveSessionMode(taskId); // 開啟特定任務
+    }
+  };
+
+  // ★ New: 切換無任務模式
+  const toggleFreeMode = () => {
+    if (activeSessionMode === "FREE_MODE") {
+      setActiveSessionMode(null);
+    } else {
+      setActiveSessionMode("FREE_MODE");
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 1. Navbar at the top (Full width) */}
       <Navbar />
-
-      {/* 2. Main Content Area (Centered with padding) */}
       <div className="p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8">My Tasks</h1>
+          
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">My Dashboard</h1>
+            {/* ★ New: Quick Focus Button */}
+            <button
+              onClick={toggleFreeMode}
+              className={`px-6 py-3 rounded-lg font-bold shadow-sm transition-all ${
+                activeSessionMode === "FREE_MODE" 
+                  ? "bg-red-100 text-red-600 border border-red-200"
+                  : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-lg hover:scale-105"
+              }`}
+            >
+              {activeSessionMode === "FREE_MODE" ? "Close Free Focus" : "⚡ Quick Focus (No Task)"}
+            </button>
+          </div>
+
+          {/* ★ Timer Area: 顯示在最上方 (如果是 Free Mode) */}
+          {activeSessionMode === "FREE_MODE" && (
+            <div className="mb-8 animate-fade-in">
+              <Timer 
+                taskId={null} // 傳入 null 代表無任務
+                onSessionComplete={() => {
+                  fetchTasks(); // 雖然沒任務，但還是更新一下狀態比較好
+                }} 
+              />
+            </div>
+          )}
 
           {/* Create Task Form */}
           <div className="bg-white p-6 rounded-lg shadow-md mb-8 border-l-4 border-blue-500">
@@ -131,9 +149,10 @@ export default function DashboardPage() {
               {tasks.map((task) => (
                 <div 
                   key={task.id} 
-                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-shadow"
+                  className={`bg-white p-6 rounded-lg shadow-sm border transition-all ${
+                    activeSessionMode === task.id ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-100"
+                  }`}
                 >
-                  {/* Task Header */}
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="text-xl font-semibold text-gray-800">{task.title}</h3>
@@ -156,22 +175,29 @@ export default function DashboardPage() {
 
                       <button
                         onClick={() => toggleTimerForTask(task.id)}
-                        className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                        disabled={activeSessionMode === "FREE_MODE"} // 如果正在 Free Mode，鎖定其他按鈕
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          activeSessionMode === task.id
+                            ? "bg-red-100 text-red-600 hover:bg-red-200"
+                            : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                        } ${activeSessionMode === "FREE_MODE" ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
-                        {activeTaskId === task.id ? "Close Timer" : "Start Focus"}
+                        {activeSessionMode === task.id ? "Close Timer" : "Start Focus"}
                       </button>
                     </div>
                   </div>
 
-                  {/* Timer Component (Conditionally Rendered) */}
-                  {activeTaskId === task.id && (
-                    <Timer 
-                      taskId={task.id} 
-                      onSessionComplete={() => {
-                        fetchTasks(); 
-                        setActiveTaskId(null); 
-                      }} 
-                    />
+                  {activeSessionMode === task.id && (
+                    <div className="mt-6 animate-fade-in">
+                      <Timer 
+                        taskId={task.id} 
+                        onSessionComplete={() => {
+                          fetchTasks(); 
+                          // 任務模式下，完成一個番茄鐘不一定要關閉，看你要不要讓他連續做
+                          // 這裡暫時保持開啟
+                        }} 
+                      />
+                    </div>
                   )}
                 </div>
               ))}

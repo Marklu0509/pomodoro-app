@@ -16,4 +16,5 @@ export interface Settings {
   miniClockMode: boolean;
   lockWindow: boolean;
   alarmSoundString: string;
+  dailyGoal: number;
 }

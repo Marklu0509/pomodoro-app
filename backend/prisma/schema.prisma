@@ -47,6 +47,9 @@ model Settings {
   shortBreakDuration Int    @default(5) @map("short_break_duration")
   longBreakDuration  Int    @default(15) @map("long_break_duration")
   
+  // --- Daily Goal (default 120 minutes)
+  dailyGoal         Int     @default(120) @map("daily_goal")
+  
   // --- Auto-start Toggles ---
   autoStartBreaks   Boolean @default(false) @map("auto_start_breaks")
   autoStartPomodoros Boolean @default(false) @map("auto_start_pomodoros")
@@ -63,7 +66,7 @@ model Settings {
   // Alerts
   alertAt25Percent  Boolean @default(false) @map("alert_at_25_percent") // Play sound at 25%, 50%, 75%?
   alarmSoundString  String  @default("classic") @map("alarm_sound")
-  
+
   // --- System & UI ---
   notificationsEnabled Boolean @default(true) @map("notifications_enabled") // Browser notifications
   miniClockMode     Boolean @default(false) @map("mini_clock_mode") // Default visual mode

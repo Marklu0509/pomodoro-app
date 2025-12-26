@@ -60,8 +60,14 @@ export class UpdateSettingDto {
   @IsOptional()
   @IsBoolean()
   lockWindow?: boolean;
-  
+
   @IsOptional()
   @IsString()
   alarmSoundString?: string;
+  
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  dailyGoal?: number; 
+
 }
