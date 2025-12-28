@@ -27,7 +27,7 @@ export class StatsService {
     const todayMinutes = Math.floor(todaySeconds / 60);
 
     // 3. Calculate "Last 7 Days" stats (for the chart)
-    const weeklyStats = [];
+    const weeklyStats: { date: string; minutes: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const date = subDays(new Date(), i);
       const start = startOfDay(date);
