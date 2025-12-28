@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/api";
 import Navbar from "../components/Navbar";
+import HeatmapSection from "../components/HeatmapSection"; // Import the new heatmap component
 import {
   BarChart,
   Bar,
@@ -15,7 +16,7 @@ import {
   Cell
 } from "recharts";
 
-// Data Types
+// Data Types definition
 interface StatsData {
   today: {
     minutes: number;
@@ -32,7 +33,7 @@ export default function StatsPage() {
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Stats on Mount
+  // Fetch Stats Data on Component Mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,8 +48,8 @@ export default function StatsPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Loading stats...</div>;
-  if (!data) return <div className="p-8 text-center">No data available.</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading stats...</div>;
+  if (!data) return <div className="p-8 text-center text-gray-500">No data available.</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,6 +59,7 @@ export default function StatsPage() {
 
         {/* 1. Today's Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          
           {/* Card: Focus Time */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-gray-500 text-sm font-medium mb-2">Today's Focus</h3>
@@ -93,8 +95,12 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* 2. Weekly Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        {/* 2. Heatmap Section (Yearly/Monthly View) */}
+        {/* This component handles its own data fetching for the yearly/monthly data */}
+        <HeatmapSection />
+
+        {/* 3. Weekly Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Last 7 Days Activity</h2>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">

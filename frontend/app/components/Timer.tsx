@@ -297,14 +297,14 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </button>
       </div>
       
-       {/* ★★★ 修改這裡：把文字改成按鈕，點擊後剩餘 2 秒 ★★★ */}
+       {/* 2 sec testing*/}
        <button
          type="button"
          onClick={() => setTimeLeft(2)}
          className="mt-2 text-[10px] text-gray-300 hover:text-red-500 cursor-pointer transition-colors"
          title="Debug: Skip to end"
        >
-         {isActive && 'wakeLock' in navigator ? 'Screen Lock Active • Test Finish' : 'Test Finish (2s)'}
+         {isActive && 'wakeLock' in navigator ? 'Test Finish (2s left)' : 'Test Finish (2s left)'}
        </button>
     </div>
   );
