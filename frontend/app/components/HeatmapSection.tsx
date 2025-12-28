@@ -92,7 +92,7 @@ export default function HeatmapSection() {
               const date = value.date ? value.date : "";
               return {
                 "data-tip": `${date}: ${minutes} mins`,
-              };
+              } as any;
             }}
             showWeekdayLabels={true}
           />
