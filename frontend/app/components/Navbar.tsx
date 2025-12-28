@@ -37,7 +37,14 @@ export default function Navbar() {
         >
         Settings
         </button>
-        
+      
+      {/* stats page */}
+        <button
+          onClick={() => router.push("/stats")}
+          className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2"
+        >
+          Stats
+        </button>
         {/* Logout Button */}
         <button
           onClick={handleLogout}

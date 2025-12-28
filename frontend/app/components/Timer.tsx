@@ -6,28 +6,30 @@ import api from "../../utils/api";
 import { Settings } from "../types/setting";
 
 interface TimerProps {
-  taskId: number | null; // ★ 修改：允許 null (代表無任務模式)
+  // Allow null for Free Focus Mode (Taskless)
+  taskId: number | null; 
   onSessionComplete: () => void;
 }
 
 type TimerMode = "WORK" | "SHORT_BREAK" | "LONG_BREAK";
 
 export default function Timer({ taskId, onSessionComplete }: TimerProps) {
-  // --- State ---
+  // --- State Management ---
   const [mode, setMode] = useState<TimerMode>("WORK");
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
 
-  // --- Audio Refs ---
+  // --- Audio References ---
   const tickAudioRef = useRef<HTMLAudioElement | null>(null);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const chimeAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // --- Wake Lock Ref ---
+  // --- Wake Lock Reference ---
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
+  // Helper: Force stop audio playback
   const stopAudio = (audio: HTMLAudioElement | null) => {
     if (audio) {
       audio.pause();
@@ -35,6 +37,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     }
   };
 
+  // Helper: Open Mini Window
   const openMiniWindow = () => {
     const width = 350;
     const height = 400;
@@ -48,7 +51,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     );
   };
 
-  // 1. Init
+  // 1. Initialization and Settings Loading
   useEffect(() => {
     tickAudioRef.current = new Audio("/sounds/tick.mp3");
     chimeAudioRef.current = new Audio("/sounds/chime.mp3");
@@ -85,7 +88,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     fetchSettings();
   }, []);
 
-  // 2. Wake Lock
+  // 2. Wake Lock Logic
   useEffect(() => {
     const requestWakeLock = async () => {
       if ('wakeLock' in navigator && isActive) {
@@ -110,7 +113,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     return () => { releaseWakeLock(); };
   }, [isActive]);
 
-  // 3. Timer Core
+  // 3. Timer Core Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -119,6 +122,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         setTimeLeft((prev) => {
           const nextTime = prev - 1;
 
+          // 25% Progress Chime Logic
           if (settings?.alertAt25Percent && mode === "WORK") {
             const total = settings.workDuration * 60;
             const p75 = Math.floor(total * 0.75);
@@ -140,6 +144,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
           return nextTime;
         });
 
+        // Ticking Sound
         if (timeLeft > 1 && settings?.tickingSound !== "none" && tickAudioRef.current) {
             tickAudioRef.current.currentTime = 0;
             tickAudioRef.current.play().catch(() => {}); 
@@ -153,7 +158,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, settings, mode]);
 
-  // 4. Handle Completion
+  // 4. Handle Session Completion
   const handleTimerComplete = async () => {
     if (alarmAudioRef.current) {
       alarmAudioRef.current.currentTime = 0;
@@ -165,7 +170,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
       try {
         const duration = settings ? settings.workDuration * 60 : 25 * 60;
         
-        // ★ 修改：如果 taskId 是 null，API 還是會接受 (因為 DTO 設為 Optional)
+        // IMPORTANT: Sending taskId (which might be null)
         await api.post("/sessions", { durationSeconds: duration, taskId: taskId });
         
         onSessionComplete(); 
@@ -202,6 +207,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     else setIsActive(false);
   };
 
+  // Button Handlers
   const handlePause = () => {
     setIsActive(!isActive);
     if (isActive) stopAudio(tickAudioRef.current);
@@ -214,6 +220,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     setTimeLeft(getTotalTime());
   };
 
+  // Helpers
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -242,6 +249,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   return (
     <div className="mt-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-lg flex flex-col items-center relative group">
       
+      {/* Mini Window Button */}
       <button 
         type="button" 
         onClick={openMiniWindow}
@@ -253,16 +261,18 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </svg>
       </button>
 
-      {/* Title indicating if we are working on a task or just focusing */}
+      {/* Dynamic Title */}
       <div className="text-sm text-gray-400 font-medium mb-2">
         {taskId ? "Focusing on Task" : "Free Focus Mode"}
       </div>
 
+      {/* Mode Badge */}
       <div className="mb-4 px-3 py-1 rounded-full text-sm font-bold tracking-wide uppercase" 
            style={{ backgroundColor: `${getColor()}20`, color: getColor() }}>
         {mode.replace("_", " ")}
       </div>
 
+      {/* Progress Ring */}
       <div className="relative w-48 h-48 mb-6">
         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="6" />
@@ -285,6 +295,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </div>
       </div>
 
+      {/* Controls */}
       <div className="flex gap-4 w-full px-4">
         <button
           type="button" 

@@ -17,7 +17,8 @@ export default function DashboardPage() {
   const [newTaskEstimate, setNewTaskEstimate] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   
-  // ★ 修改：activeTaskId 可以是 number (任務ID) 或 "FREE_MODE" (無任務) 或 null (沒在計時)
+  // State to track which session is active
+  // Can be a task ID (number), "FREE_MODE" (string), or null (inactive)
   const [activeSessionMode, setActiveSessionMode] = useState<number | "FREE_MODE" | null>(null);
 
   const fetchTasks = async () => {
@@ -56,15 +57,16 @@ export default function DashboardPage() {
     }
   };
 
+  // Toggle timer for a specific task
   const toggleTimerForTask = (taskId: number) => {
     if (activeSessionMode === taskId) {
-      setActiveSessionMode(null); // 關閉
+      setActiveSessionMode(null); // Close if already open
     } else {
-      setActiveSessionMode(taskId); // 開啟特定任務
+      setActiveSessionMode(taskId); // Open for this task
     }
   };
 
-  // ★ New: 切換無任務模式
+  // Toggle Taskless / Free Focus Mode
   const toggleFreeMode = () => {
     if (activeSessionMode === "FREE_MODE") {
       setActiveSessionMode(null);
@@ -79,9 +81,9 @@ export default function DashboardPage() {
       <div className="p-8">
         <div className="max-w-4xl mx-auto">
           
+          {/* Header & Quick Focus Button */}
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800">My Dashboard</h1>
-            {/* ★ New: Quick Focus Button */}
             <button
               onClick={toggleFreeMode}
               className={`px-6 py-3 rounded-lg font-bold shadow-sm transition-all ${
@@ -94,13 +96,13 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* ★ Timer Area: 顯示在最上方 (如果是 Free Mode) */}
+          {/* Free Mode Timer Area */}
           {activeSessionMode === "FREE_MODE" && (
             <div className="mb-8 animate-fade-in">
               <Timer 
-                taskId={null} // 傳入 null 代表無任務
+                taskId={null} // null indicates Free Mode
                 onSessionComplete={() => {
-                  fetchTasks(); // 雖然沒任務，但還是更新一下狀態比較好
+                  fetchTasks(); // Refresh state even if no task updated
                 }} 
               />
             </div>
@@ -175,7 +177,7 @@ export default function DashboardPage() {
 
                       <button
                         onClick={() => toggleTimerForTask(task.id)}
-                        disabled={activeSessionMode === "FREE_MODE"} // 如果正在 Free Mode，鎖定其他按鈕
+                        disabled={activeSessionMode === "FREE_MODE"} // Disable if Free Mode is active
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                           activeSessionMode === task.id
                             ? "bg-red-100 text-red-600 hover:bg-red-200"
@@ -193,8 +195,6 @@ export default function DashboardPage() {
                         taskId={task.id} 
                         onSessionComplete={() => {
                           fetchTasks(); 
-                          // 任務模式下，完成一個番茄鐘不一定要關閉，看你要不要讓他連續做
-                          // 這裡暫時保持開啟
                         }} 
                       />
                     </div>
