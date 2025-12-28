@@ -95,10 +95,6 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* 2. Heatmap Section (Yearly/Monthly View) */}
-        {/* This component handles its own data fetching for the yearly/monthly data */}
-        <HeatmapSection />
-
         {/* 3. Weekly Chart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Last 7 Days Activity</h2>
@@ -136,7 +132,9 @@ export default function StatsPage() {
             </ResponsiveContainer>
           </div>
         </div>
-
+        {/* 2. Heatmap Section (Yearly/Monthly View) */}
+        {/* This component handles its own data fetching for the yearly/monthly data */}
+        <HeatmapSection />
       </div>
     </div>
   );
