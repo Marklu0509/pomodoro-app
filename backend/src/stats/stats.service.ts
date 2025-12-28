@@ -1,7 +1,7 @@
 // backend/src/stats/stats.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { startOfDay, subDays, format } from 'date-fns';
+import { startOfDay, subDays, format, subYears } from 'date-fns';
 
 @Injectable()
 export class StatsService {
@@ -57,5 +57,49 @@ export class StatsService {
       },
       weekly: weeklyStats,
     };
+  }
+
+// ★ New Method: Get data for heatmaps (Last 365 days)
+  async getHeatmapData(userId: number) {
+    // 1. Define range: From 1 year ago to Today
+    const endDate = new Date();
+    const startDate = subYears(endDate, 1);
+
+    // 2. Query all sessions within this range
+    const sessions = await this.prisma.pomodoroSession.findMany({
+      where: {
+        userId,
+        startTime: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        startTime: true,
+        durationSeconds: true,
+      },
+    });
+
+    // 3. Aggregate data by date (YYYY-MM-DD)
+    // Map format: { "2023-12-25": 120, "2023-12-26": 50 }
+    const dailyMap = new Map<string, number>();
+
+    sessions.forEach((session) => {
+      // Convert UTC time to YYYY-MM-DD string
+      // Note: Ideally, handle timezone from client, but here we use server local or UTC
+      const dateStr = format(session.startTime, 'yyyy-MM-dd');
+      
+      const current = dailyMap.get(dateStr) || 0;
+      // Convert seconds to minutes
+      dailyMap.set(dateStr, current + Math.floor(session.durationSeconds / 60));
+    });
+
+    // 4. Convert Map to Array for frontend (recharts or heatmap lib friendly)
+    const heatmapData = Array.from(dailyMap.entries()).map(([date, count]) => ({
+      date,
+      count, // minutes
+    }));
+
+    return heatmapData;
   }
 }

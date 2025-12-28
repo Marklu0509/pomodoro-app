@@ -14,4 +14,9 @@ export class StatsController {
   getStats(@GetUser() user: User) {
     return this.statsService.getUserStats(user.id);
   }
+
+  @Get('heatmap')
+  getHeatmap(@GetUser() user: User) {
+    return this.statsService.getHeatmapData(user.id);
+  }
 }
