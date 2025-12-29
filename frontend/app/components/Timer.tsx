@@ -21,16 +21,13 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   const [sessionCount, setSessionCount] = useState(0);
 
   // --- Audio Refs ---
-  const tickAudioRef = useRef<HTMLAudioElement | null>(null);
+  // ambientAudioRef handles both Ticking and White Noise (Rain, Forest, etc.)
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const chimeAudioRef = useRef<HTMLAudioElement | null>(null);
-  
-  // ★ New: Background White Noise Ref
-  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
-
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-  // Helper: Stop audio
+  // Helper: Force stop and reset any audio
   const stopAudio = (audio: HTMLAudioElement | null) => {
     if (audio) {
       audio.pause();
@@ -38,6 +35,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     }
   };
 
+  // Function to open the mini window
   const openMiniWindow = () => {
     const width = 350;
     const height = 400;
@@ -46,11 +44,9 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     window.open('/dashboard', 'PomodoroMini', `width=${width},height=${height},left=${left},top=${top}`);
   };
 
-  // 1. Init
+  // 1. Initialization and Settings Load
   useEffect(() => {
-    tickAudioRef.current = new Audio("/sounds/tick.mp3");
     chimeAudioRef.current = new Audio("/sounds/chime.mp3");
-    // Background audio is initialized when settings load
 
     const fetchSettings = async () => {
       try {
@@ -59,26 +55,30 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         setSettings(userSettings);
         
         if (userSettings) {
-           setTimeLeft(userSettings.workDuration * 60);
-           
-           if (tickAudioRef.current) tickAudioRef.current.volume = userSettings.tickVolume / 100;
-           if (chimeAudioRef.current) chimeAudioRef.current.volume = userSettings.notificationVolume / 100;
+          setTimeLeft(userSettings.workDuration * 60);
+          
+          // Set volume for notification chime
+          if (chimeAudioRef.current) chimeAudioRef.current.volume = userSettings.notificationVolume / 100;
 
-           // Alarm Sound
-           const alarmFile = userSettings.alarmSoundString ? `/sounds/alarm-${userSettings.alarmSoundString}.mp3` : "/sounds/alarm-classic.mp3";
-           alarmAudioRef.current = new Audio(alarmFile);
-           if (alarmAudioRef.current) alarmAudioRef.current.volume = userSettings.notificationVolume / 100;
+          // Prepare Alarm Sound
+          const alarmFile = userSettings.alarmSoundString ? `/sounds/alarm-${userSettings.alarmSoundString}.mp3` : "/sounds/alarm-classic.mp3";
+          alarmAudioRef.current = new Audio(alarmFile);
+          if (alarmAudioRef.current) alarmAudioRef.current.volume = userSettings.notificationVolume / 100;
 
-           // ★ New: Initialize Background Sound
-           if (userSettings.backgroundSound && userSettings.backgroundSound !== "none") {
-             bgAudioRef.current = new Audio(`/sounds/${userSettings.backgroundSound}.mp3`);
-             bgAudioRef.current.loop = true; // Loop the background noise
-             // Background volume usually should be lower, hardcode or use tickVolume?
-             // Let's use 50% of notification volume for now or a fixed low volume
-             bgAudioRef.current.volume = 0.3; 
-           }
-
-           if (userSettings.miniClockMode) console.log("Mini mode enabled.");
+          // ★ Initialize Ambient Sound (Ticking or White Noise)
+          if (userSettings.backgroundSound && userSettings.backgroundSound !== "none") {
+            // Ticking sound is handled specially in the timer loop if selected
+            // But we initialize the file here if it's a continuous noise
+            if (userSettings.backgroundSound !== "ticking") {
+              ambientAudioRef.current = new Audio(`/sounds/${userSettings.backgroundSound}.mp3`);
+              ambientAudioRef.current.loop = true;
+              ambientAudioRef.current.volume = userSettings.tickVolume / 100;
+            } else {
+              // Pre-load ticking for the interval loop
+              ambientAudioRef.current = new Audio("/sounds/tick.mp3");
+              ambientAudioRef.current.volume = userSettings.tickVolume / 100;
+            }
+          }
         }
       } catch (err) {
         console.error("Failed to load settings", err);
@@ -86,13 +86,14 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     };
     fetchSettings();
 
-    // Cleanup audio on unmount
+    // Cleanup: Stop all sounds when component unmounts
     return () => {
-      stopAudio(bgAudioRef.current);
+      stopAudio(ambientAudioRef.current);
+      stopAudio(alarmAudioRef.current);
     };
   }, []);
 
-  // 2. Wake Lock
+  // 2. Wake Lock (Prevent screen sleep)
   useEffect(() => {
     const requestWakeLock = async () => {
       if ('wakeLock' in navigator && isActive) {
@@ -112,31 +113,33 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     return () => { releaseWakeLock(); };
   }, [isActive]);
 
-  // ★ New: Handle Background Audio Playback
+  // ★ 3. Handle Continuous Ambient Sound (Rain, Forest, Cafe)
   useEffect(() => {
-    if (isActive && bgAudioRef.current && mode === "WORK") {
-      // Only play background noise during WORK mode
-      bgAudioRef.current.play().catch(e => console.log("Bg audio play failed", e));
+    const isContinuous = settings?.backgroundSound !== "none" && settings?.backgroundSound !== "ticking";
+    
+    if (isActive && isContinuous && ambientAudioRef.current && mode === "WORK") {
+      ambientAudioRef.current.play().catch(e => console.log("Ambient play failed", e));
     } else {
-      // Pause if timer is paused or in Break mode
-      if (bgAudioRef.current) bgAudioRef.current.pause();
+      // Pause continuous sound if timer is paused, finished, or in break mode
+      if (ambientAudioRef.current && isContinuous) {
+        ambientAudioRef.current.pause();
+      }
     }
-  }, [isActive, mode]);
+  }, [isActive, mode, settings]);
 
-  // 3. Timer Core
+  // 4. Core Timer Interval Loop
   useEffect(() => {
     let interval: NodeJS.Timeout;
+
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((prev) => {
           const nextTime = prev - 1;
-          
-          // Chime
+
+          // Progress Chime (25% marks)
           if (settings?.alertAt25Percent && mode === "WORK") {
             const total = settings.workDuration * 60;
-            const p75 = Math.floor(total * 0.75);
-            const p50 = Math.floor(total * 0.50);
-            const p25 = Math.floor(total * 0.25);
+            const p75 = Math.floor(total * 0.75), p50 = Math.floor(total * 0.50), p25 = Math.floor(total * 0.25);
             if (nextTime === p75 || nextTime === p50 || nextTime === p25) {
                if (chimeAudioRef.current) {
                  chimeAudioRef.current.currentTime = 0;
@@ -146,16 +149,17 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
           }
 
           if (nextTime <= 0) {
-            stopAudio(tickAudioRef.current);
+            // ★ Stop ticking immediately when reaching 0
+            if (settings?.backgroundSound === "ticking") stopAudio(ambientAudioRef.current);
             return 0;
           }
           return nextTime;
         });
 
-        // Tick
-        if (timeLeft > 1 && settings?.tickingSound !== "none" && tickAudioRef.current) {
-            tickAudioRef.current.currentTime = 0;
-            tickAudioRef.current.play().catch(() => {}); 
+        // ★ Play Ticking Sound (if selected)
+        if (timeLeft > 1 && settings?.backgroundSound === "ticking" && ambientAudioRef.current) {
+            ambientAudioRef.current.currentTime = 0;
+            ambientAudioRef.current.play().catch(() => {}); 
         }
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
@@ -165,14 +169,14 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, settings, mode]);
 
-  // 4. Completion
+  // 5. Handle Timer Completion
   const handleTimerComplete = async () => {
-    // Stop Background Noise immediately
-    if (bgAudioRef.current) bgAudioRef.current.pause();
+    // Stop any ambient sound (Continuous or Ticking)
+    stopAudio(ambientAudioRef.current);
 
     if (alarmAudioRef.current) {
       alarmAudioRef.current.currentTime = 0;
-      alarmAudioRef.current.play().catch((e) => console.log("Audio play failed", e));
+      alarmAudioRef.current.play().catch((e) => console.log("Alarm play failed", e));
       setTimeout(() => stopAudio(alarmAudioRef.current), 5000);
     }
 
@@ -185,7 +189,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         setSessionCount(newCount);
         if (newCount % 4 === 0) switchMode("LONG_BREAK");
         else switchMode("SHORT_BREAK");
-      } catch (error) { console.error("Failed to save session", error); }
+      } catch (error) { console.error("Session save failed", error); }
     } else {
       switchMode("WORK");
     }
@@ -194,12 +198,10 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   const switchMode = (newMode: TimerMode) => {
     setMode(newMode);
     if (!settings) return;
-
     let newDuration = 25 * 60;
     if (newMode === "WORK") newDuration = settings.workDuration * 60;
     else if (newMode === "SHORT_BREAK") newDuration = settings.shortBreakDuration * 60;
     else if (newMode === "LONG_BREAK") newDuration = settings.longBreakDuration * 60;
-    
     setTimeLeft(newDuration);
 
     let shouldAutoStart = false;
@@ -210,19 +212,24 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
     else setIsActive(false);
   };
 
+  // ★ Handler: Pause (Includes Audio Stop)
   const handlePause = () => {
     setIsActive(!isActive);
-    if (isActive) stopAudio(tickAudioRef.current);
+    if (isActive) {
+        // Just paused: Stop all ambient sounds immediately
+        stopAudio(ambientAudioRef.current);
+    }
   };
 
+  // ★ Handler: Reset (Includes Audio Stop)
   const handleReset = () => {
     setIsActive(false);
-    stopAudio(tickAudioRef.current);
+    stopAudio(ambientAudioRef.current);
     stopAudio(alarmAudioRef.current);
-    if (bgAudioRef.current) bgAudioRef.current.pause(); // Reset bg audio
     setTimeLeft(getTotalTime());
   };
 
+  // Helpers
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -249,14 +256,13 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
   };
 
   return (
-    // ★ Updated Styles for Dark Mode
     <div className="mt-4 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-lg flex flex-col items-center relative group transition-colors duration-300">
       
+      {/* Mini Window Button */}
       <button 
         type="button" 
         onClick={openMiniWindow}
         className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-        title="Open Mini Window"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -285,7 +291,6 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {/* ★ Dark mode text color */}
           <span className="text-4xl font-mono font-bold text-gray-800 dark:text-gray-100">
             {formatTime(timeLeft)}
           </span>
@@ -299,7 +304,7 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         <button
           type="button" 
           onClick={handlePause}
-          className="flex-1 py-3 rounded-xl font-bold text-white shadow-md transition-all active:scale-95"
+          className="flex-1 py-3 rounded-xl font-bold text-white shadow-md active:scale-95"
           style={{ backgroundColor: isActive ? "#f59e0b" : getColor() }}
         >
           {isActive ? "PAUSE" : "START"}
@@ -313,13 +318,13 @@ export default function Timer({ taskId, onSessionComplete }: TimerProps) {
         </button>
       </div>
       
+       {/* ★ UI Cleanup: Simplified Debug Button */}
        <button
          type="button"
          onClick={() => setTimeLeft(2)}
-         className="mt-2 text-[10px] text-gray-300 hover:text-red-500 cursor-pointer transition-colors"
-         title="Debug: Skip to end"
+         className="mt-4 text-[11px] text-gray-300 hover:text-red-400 cursor-pointer transition-colors"
        >
-         {isActive && 'wakeLock' in navigator ? ' Test Finish (2s)' : 'Test Finish (2s)'}
+         Test Finish (2s left)
        </button>
     </div>
   );

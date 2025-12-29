@@ -123,14 +123,30 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Section 3: Sound & Notifications */}
+          {/* --- Sound & Notifications Section --- */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Sound & Notifications</h2>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 border-b pb-2 mb-4">Sound & Notifications</h2>
             
-            {/* Ticking Volume */}
+            {/* Combined Ambient Sound Selection */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-600 mb-1">
-                Ticking Volume ({settings.tickVolume}%)
+              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Ambient Sound (Background)</label>
+              <select
+                value={settings.backgroundSound || "none"}
+                onChange={(e) => handleChange("backgroundSound", e.target.value)}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
+              >
+                <option value="none">None (Silent)</option>
+                <option value="ticking">Classic Ticking ⏱️</option>
+                <option value="rain">Rainy Day 🌧️</option>
+                <option value="forest">Forest Ambience 🌲</option>
+                <option value="cafe">Coffee Shop ☕</option>
+              </select>
+            </div>
+
+            {/* Ambient Volume (Controls Ticking or White Noise) */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                Ambient Volume ({settings.tickVolume}%)
               </label>
               <input
                 type="range"
@@ -225,20 +241,6 @@ export default function SettingsPage() {
             >
               Cancel
             </button>
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Background White Noise</label>
-            <select
-              value={settings.backgroundSound || "none"}
-              onChange={(e) => handleChange("backgroundSound", e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
-            >
-              <option value="none">None (Silent)</option>
-              <option value="rain">Rainy Day 🌧️</option>
-              <option value="forest">Forest Ambience 🌲</option>
-              <option value="cafe">Coffee Shop ☕</option>
-            </select>
           </div>
 
         </div>
