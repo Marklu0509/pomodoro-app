@@ -1,6 +1,8 @@
 // backend/src/focus-modes/focus-modes.controller.ts
 import { Controller, Get, Patch, Delete, Param, Body, UseGuards, ParseIntPipe } from '@nestjs/common';
-// ... other imports
+import { FocusModesService } from './focus-modes.service';
+import { JwtGuard } from '../auth/guard/jwt.guard';
+import { GetUser } from '../auth/decorator/get-user.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('focus-modes')
