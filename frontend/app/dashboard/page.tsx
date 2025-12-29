@@ -1,13 +1,12 @@
 // frontend/app/dashboard/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../../utils/api";
 import { Task } from "../types/task"; 
 import Timer from "../components/Timer"; 
 import Navbar from "../components/Navbar"; 
 
-// Local interface for FocusMode
 interface FocusMode {
   id: number;
   name: string;
@@ -29,29 +28,31 @@ export default function DashboardPage() {
   const [newTaskEstimate, setNewTaskEstimate] = useState(1);
   const [activeSessionTaskId, setActiveSessionTaskId] = useState<number | "FREE_MODE" | null>(null);
 
-  // 1. Fetch initial data (Tasks & Focus Modes)
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        const [taskRes, modeRes] = await Promise.all([
-          api.get("/tasks"),
-          api.get("/focus-modes")
-        ]);
-        setTasks(taskRes.data);
-        setFocusModes(modeRes.data);
-        
-        // Default to the first mode (or the one marked isDefault)
-        if (modeRes.data.length > 0) {
-          setActiveMode(modeRes.data[0]);
-        }
-      } catch (error) {
-        console.error("Initialization failed", error);
-      } finally {
-        setIsLoading(false);
+  // ★ FIX: Move initData outside of useEffect so it's accessible everywhere in the component
+  const initData = useCallback(async () => {
+    try {
+      const [taskRes, modeRes] = await Promise.all([
+        api.get("/tasks"),
+        api.get("/focus-modes")
+      ]);
+      setTasks(taskRes.data);
+      setFocusModes(modeRes.data);
+      
+      // Default to the first mode if none is selected yet
+      if (modeRes.data.length > 0 && !activeMode) {
+        setActiveMode(modeRes.data[0]);
       }
-    };
+    } catch (error) {
+      console.error("Initialization failed", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeMode]);
+
+  // Initial load
+  useEffect(() => {
     initData();
-  }, []);
+  }, [initData]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,12 +72,13 @@ export default function DashboardPage() {
       <Navbar />
       <div className="max-w-4xl mx-auto p-8">
         
-        {/* --- Phase 11: Mode Selection Tabs --- */}
+        {/* Mode Selection Tabs */}
         <div className="flex flex-col items-center mb-10">
           <div className="flex bg-gray-200/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm">
             {focusModes.map((mode) => (
               <button
                 key={mode.id}
+                type="button"
                 onClick={() => setActiveMode(mode)}
                 className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                   activeMode?.id === mode.id
@@ -87,8 +89,8 @@ export default function DashboardPage() {
                 {mode.name}
               </button>
             ))}
-            {/* Shortcut to Settings to add more */}
             <button 
+              type="button"
               onClick={() => window.location.href='/settings'}
               className="px-4 py-2.5 text-gray-400 hover:text-blue-500 text-sm font-bold"
             >
@@ -100,6 +102,7 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Dashboard</h1>
           <button
+            type="button"
             onClick={() => setActiveSessionTaskId(activeSessionTaskId === "FREE_MODE" ? null : "FREE_MODE")}
             className={`px-6 py-3 rounded-2xl font-black text-sm tracking-wider transition-all ${
               activeSessionTaskId === "FREE_MODE" 
@@ -116,8 +119,8 @@ export default function DashboardPage() {
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
             <Timer 
               taskId={null} 
-              activeMode={activeMode} // ★ Pass the selected profile
-              onSessionComplete={() => {}} 
+              activeMode={activeMode} 
+              onSessionComplete={initData} // ★ Now initData is accessible!
             />
           </div>
         )}
@@ -143,29 +146,34 @@ export default function DashboardPage() {
 
         {/* Task List */}
         <div className="grid gap-4">
-          {tasks.map((task) => (
-            <div key={task.id} className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{task.title}</h3>
-                  <p className="text-sm text-gray-400 mt-1">{task.completedPomodoros} / {task.estimatedPomodoros} Pomodoros</p>
+          {isLoading ? (
+            <p className="text-center text-gray-400">Loading tasks...</p>
+          ) : (
+            tasks.map((task) => (
+              <div key={task.id} className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{task.title}</h3>
+                    <p className="text-sm text-gray-400 mt-1">{task.completedPomodoros} / {task.estimatedPomodoros} Pomodoros</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSessionTaskId(activeSessionTaskId === task.id ? null : task.id)}
+                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+                      activeSessionTaskId === task.id ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    }`}
+                  >
+                    {activeSessionTaskId === task.id ? "Close" : "Focus"}
+                  </button>
                 </div>
-                <button
-                  onClick={() => setActiveSessionTaskId(activeSessionTaskId === task.id ? null : task.id)}
-                  className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
-                    activeSessionTaskId === task.id ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  }`}
-                >
-                  {activeSessionTaskId === task.id ? "Close" : "Focus"}
-                </button>
+                {activeSessionTaskId === task.id && activeMode && (
+                  <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-700">
+                    <Timer taskId={task.id} activeMode={activeMode} onSessionComplete={initData} />
+                  </div>
+                )}
               </div>
-              {activeSessionTaskId === task.id && activeMode && (
-                <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-700">
-                  <Timer taskId={task.id} activeMode={activeMode} onSessionComplete={initData} />
-                </div>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
