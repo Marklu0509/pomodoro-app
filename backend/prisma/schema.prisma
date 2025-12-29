@@ -27,8 +27,9 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  // Relationships
+// Relationships
   settings      Settings?
+  focusModes    FocusMode[] // ★ One user has many modes
   tasks         Task[]
   sessions      PomodoroSession[]
 
@@ -77,6 +78,27 @@ model Settings {
   @@map("settings")
 }
 
+// ★ New Model: FocusMode
+model FocusMode {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  name              String   // e.g., "Deep Work", "Coding"
+  
+  // Custom settings for this profile
+  workDuration      Int      @default(25) @map("work_duration")
+  shortBreakDuration Int     @default(5) @map("short_break_duration")
+  longBreakDuration  Int     @default(15) @map("long_break_duration")
+  
+  ambientVolume     Int      @default(50) @map("ambient_volume")
+  ambientSound      String   @default("ticking") @map("ambient_sound")
+  alarmSound        String   @default("classic") @map("alarm_sound")
+
+  isDefault         Boolean  @default(false) @map("is_default")
+
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@map("focus_modes")
+}
 // --------------------------------------
 // Task Management
 // --------------------------------------

@@ -7,9 +7,10 @@ import { TasksModule } from './tasks/tasks.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { SettingsModule } from './settings/settings.module';
 import { StatsModule } from './stats/stats.module';
+import { FocusModesModule } from './focus-modes/focus-modes.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, TasksModule, SessionsModule, SettingsModule, StatsModule],
+  imports: [PrismaModule, AuthModule, TasksModule, SessionsModule, SettingsModule, StatsModule, FocusModesModule],
   controllers: [AppController],
   providers: [AppService],
 })
