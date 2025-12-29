@@ -207,7 +207,7 @@ export default function SettingsPage() {
                 />
                 <span className="text-gray-700">Start in Mini-Clock Mode</span>
               </label>
-            </div>
+            </div>  
           </div>
 
           {/* Action Buttons */}
@@ -225,6 +225,20 @@ export default function SettingsPage() {
             >
               Cancel
             </button>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Background White Noise</label>
+            <select
+              value={settings.backgroundSound || "none"}
+              onChange={(e) => handleChange("backgroundSound", e.target.value)}
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
+            >
+              <option value="none">None (Silent)</option>
+              <option value="rain">Rainy Day 🌧️</option>
+              <option value="forest">Forest Ambience 🌲</option>
+              <option value="cafe">Coffee Shop ☕</option>
+            </select>
           </div>
 
         </div>

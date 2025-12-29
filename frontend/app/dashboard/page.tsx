@@ -76,7 +76,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Navbar />
       <div className="p-8">
         <div className="max-w-4xl mx-auto">
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           )}
 
           {/* Create Task Form */}
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8 border-l-4 border-blue-500">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8 border-l-4 border-blue-500">
             <h2 className="text-lg font-semibold text-gray-700 mb-4">Add New Task</h2>
             <form onSubmit={handleCreateTask} className="flex gap-4 items-end">
               <div className="flex-grow">
@@ -151,7 +151,7 @@ export default function DashboardPage() {
               {tasks.map((task) => (
                 <div 
                   key={task.id} 
-                  className={`bg-white p-6 rounded-lg shadow-sm border transition-all ${
+                  className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border transition-all ${
                     activeSessionMode === task.id ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-100"
                   }`}
                 >
