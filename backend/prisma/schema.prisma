@@ -92,7 +92,7 @@ model FocusMode {
   ambientVolume     Int      @default(50) @map("ambient_volume")
   ambientSound      String   @default("ticking") @map("ambient_sound")
   alarmSound        String   @default("classic") @map("alarm_sound")
-
+  alertAt25Percent   Boolean  @default(true) @map("alert_at_25_percent")
   isDefault         Boolean  @default(false) @map("is_default")
 
   user              User     @relation(fields: [userId], references: [id])

@@ -14,6 +14,7 @@ interface FocusMode {
   ambientVolume: number;
   ambientSound: string;
   alarmSound: string;
+  alertAt25Percent: boolean; // ★ Added field
 }
 
 export default function SettingsPage() {
@@ -22,7 +23,6 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 1. Fetch all Focus Modes
   useEffect(() => {
     fetchModes();
   }, []);
@@ -39,34 +39,38 @@ export default function SettingsPage() {
     }
   };
 
-  // 2. Handle Input Changes for the selected mode
   const handleFieldChange = (field: keyof FocusMode, value: any) => {
     if (!selectedMode) return;
     setSelectedMode({ ...selectedMode, [field]: value });
   };
 
-  // 3. Save Changes to Backend
   const handleSave = async () => {
     if (!selectedMode) return;
     setIsSaving(true);
     try {
       await api.patch(`/focus-modes/${selectedMode.id}`, selectedMode);
-      // Update local list
       setModes(modes.map(m => m.id === selectedMode.id ? selectedMode : m));
-      alert("Settings updated successfully!");
+      alert("Settings saved!");
     } catch (err) {
-      alert("Failed to save settings.");
+      alert("Failed to save.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // 4. Create a New Mode
+  // ★ FIX: Correctly handling the creation and state update
   const handleAddNew = async () => {
     try {
-      const res = await api.post("/focus-modes", { name: "New Profile" });
-      setModes([...modes, res.data]);
-      setSelectedMode(res.data);
+      const res = await api.post("/focus-modes", { 
+        name: "New Profile",
+        workDuration: 25,
+        shortBreakDuration: 5,
+        longBreakDuration: 15,
+        alertAt25Percent: true // Default to true
+      });
+      const newMode = res.data;
+      setModes([...modes, newMode]);
+      setSelectedMode(newMode); // Automatically switch to the new one
     } catch (err) {
       console.error("Failed to add mode", err);
     }
@@ -79,7 +83,7 @@ export default function SettingsPage() {
       <Navbar />
       <div className="max-w-5xl mx-auto p-8 flex flex-col md:flex-row gap-8">
         
-        {/* Left Sidebar: Profile List */}
+        {/* Sidebar */}
         <div className="w-full md:w-64 space-y-2">
           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Focus Profiles</h3>
           {modes.map((mode) => (
@@ -96,6 +100,7 @@ export default function SettingsPage() {
             </button>
           ))}
           <button 
+            type="button"
             onClick={handleAddNew}
             className="w-full mt-4 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-gray-400 font-bold hover:border-blue-400 hover:text-blue-500 transition-all"
           >
@@ -103,7 +108,7 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {/* Right Content: Editor Section */}
+        {/* Editor */}
         {selectedMode && (
           <div className="flex-grow bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-center mb-8">
@@ -123,7 +128,6 @@ export default function SettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* --- Durations Section --- */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-gray-400 uppercase">Durations (Minutes)</h4>
                 <div>
@@ -132,7 +136,7 @@ export default function SettingsPage() {
                     type="number"
                     value={selectedMode.workDuration}
                     onChange={(e) => handleFieldChange("workDuration", parseInt(e.target.value))}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white"
                   />
                 </div>
                 <div className="flex gap-4">
@@ -142,7 +146,7 @@ export default function SettingsPage() {
                       type="number"
                       value={selectedMode.shortBreakDuration}
                       onChange={(e) => handleFieldChange("shortBreakDuration", parseInt(e.target.value))}
-                      className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                      className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white"
                     />
                   </div>
                   <div className="flex-1">
@@ -151,21 +155,36 @@ export default function SettingsPage() {
                       type="number"
                       value={selectedMode.longBreakDuration}
                       onChange={(e) => handleFieldChange("longBreakDuration", parseInt(e.target.value))}
-                      className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                      className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white"
                     />
                   </div>
                 </div>
+
+                {/* ★ Progress Alert Option */}
+                <div className="pt-4">
+                  <h4 className="text-sm font-bold text-gray-400 uppercase mb-3">Alerts</h4>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedMode.alertAt25Percent}
+                      onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)}
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                      Chime at 75%, 50%, and 25% remaining
+                    </span>
+                  </label>
+                </div>
               </div>
 
-              {/* --- Audio Section --- */}
               <div className="space-y-4">
-                <h4 className="text-sm font-bold text-gray-400 uppercase">Audio & Environment</h4>
+                <h4 className="text-sm font-bold text-gray-400 uppercase">Audio</h4>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Ambient Sound</label>
                   <select
                     value={selectedMode.ambientSound}
                     onChange={(e) => handleFieldChange("ambientSound", e.target.value)}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white"
                   >
                     <option value="none">None</option>
                     <option value="ticking">Classic Ticking</option>
@@ -183,18 +202,6 @@ export default function SettingsPage() {
                     onChange={(e) => handleFieldChange("ambientVolume", parseInt(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Alarm Notification</label>
-                  <select
-                    value={selectedMode.alarmSound}
-                    onChange={(e) => handleFieldChange("alarmSound", e.target.value)}
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                  >
-                    <option value="classic">Classic Bell</option>
-                    <option value="digital">Digital Beep</option>
-                    <option value="bird">Morning Bird</option>
-                  </select>
                 </div>
               </div>
             </div>
