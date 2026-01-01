@@ -16,6 +16,7 @@ interface FocusMode {
   ambientVolume: number;
   ambientSound: string;
   alarmSound: string;
+  alertAt25Percent: boolean;
 }
 
 export default function DashboardPage() {
