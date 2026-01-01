@@ -1,5 +1,5 @@
 // backend/src/focus-modes/focus-modes.controller.ts
-import { Controller, Get, Patch, Delete, Param, Body, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { FocusModesService } from './focus-modes.service';
 import { JwtGuard } from '../auth/guard/jwt.guard';
 import { GetUser } from '../auth/decorator/get-user.decorator';
@@ -12,6 +12,11 @@ export class FocusModesController {
   @Get()
   getModes(@GetUser('id') userId: number) {
     return this.focusModesService.findAll(userId);
+  }
+
+  @Post()
+  createMode(@GetUser('id') userId: number, @Body() dto: any) {
+    return this.focusModesService.create(userId, dto);
   }
 
   @Patch(':id')

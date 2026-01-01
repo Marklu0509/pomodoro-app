@@ -69,10 +69,31 @@ export default function SettingsPage() {
         alertAt25Percent: true // Default to true
       });
       const newMode = res.data;
-      setModes([...modes, newMode]);
+      setModes((prev) => [...prev, newMode]);
       setSelectedMode(newMode); // Automatically switch to the new one
     } catch (err) {
       console.error("Failed to add mode", err);
+      alert("Failed to add profile.");
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selectedMode) return;
+    if (modes.length <= 1) {
+      alert("You must keep at least one profile.");
+      return;
+    }
+    const ok = confirm(`Delete profile "${selectedMode.name}"?`);
+    if (!ok) return;
+
+    try {
+      await api.delete(`/focus-modes/${selectedMode.id}`);
+      const remaining = modes.filter((m) => m.id !== selectedMode.id);
+      setModes(remaining);
+      setSelectedMode(remaining[0] ?? null);
+    } catch (err) {
+      console.error("Failed to delete mode", err);
+      alert("Failed to delete profile.");
     }
   };
 
@@ -118,13 +139,24 @@ export default function SettingsPage() {
                 onChange={(e) => handleFieldChange("name", e.target.value)}
                 className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3"
               />
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg disabled:opacity-50"
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleDeleteSelected}
+                  disabled={modes.length <= 1}
+                  className="px-4 py-2.5 rounded-xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50 disabled:hover:bg-transparent"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
