@@ -20,18 +20,18 @@ interface FocusMode {
 
 interface TimerProps {
   taskId: number | null;
+  taskName: string; // ★ New Prop: The name of the current task
   activeMode: FocusMode;
   onSessionComplete: () => void;
-  // ★ New Props for integrated controls
   modes?: FocusMode[];
   onModeChange?: (mode: FocusMode) => void;
   onExit?: () => void;
   onPopOut?: () => void;
-  showControls?: boolean; // Toggle to show/hide the top bar in mini mode
+  showControls?: boolean;
 }
 
 export default function Timer({ 
-  taskId, activeMode, onSessionComplete, 
+  taskId, taskName, activeMode, onSessionComplete, 
   modes, onModeChange, onExit, onPopOut,
   showControls = true 
 }: TimerProps) {
@@ -98,7 +98,7 @@ export default function Timer({
     if (status === "WORK") {
       await api.post("/sessions", { durationSeconds: activeMode.workDuration * 60, taskId });
       onSessionComplete();
-      setStatus("SHORT_BREAK"); // Simplified for brevity
+      setStatus("SHORT_BREAK");
       setTimeLeft(activeMode.shortBreakDuration * 60);
     } else {
       setStatus("WORK");
@@ -111,17 +111,14 @@ export default function Timer({
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-2xl flex flex-col items-center relative transition-all duration-500">
       
-      {/* ★ New Integrated Header Row inside Card */}
       {showControls && (
         <div className="w-full flex justify-between items-center mb-6 px-2">
-          {/* Exit on Left */}
-          <button onClick={onExit} className="p-2 text-gray-300 hover:text-red-500 transition-colors" title="Exit">
+          <button onClick={onExit} className="p-2 text-gray-300 hover:text-red-500 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
           </button>
 
-          {/* Mode Switcher in Middle */}
           <div className="flex bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl">
             {modes?.map((m) => (
               <button
@@ -136,8 +133,7 @@ export default function Timer({
             ))}
           </div>
 
-          {/* Pop-out on Right */}
-          <button onClick={onPopOut} className="p-2 text-gray-300 hover:text-blue-500 transition-colors" title="Pop-out">
+          <button onClick={onPopOut} className="p-2 text-gray-300 hover:text-blue-500 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
             </svg>
@@ -145,8 +141,11 @@ export default function Timer({
         </div>
       )}
 
-      {/* Timer UI below... */}
-      <div className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase mb-2">Focus Mode ({status})</div>
+      {/* ★ Modified Line: Show Task Name instead of generic Focus Mode */}
+      <div className="text-[11px] font-black tracking-[0.15em] text-gray-400 dark:text-gray-500 uppercase mb-2 text-center max-w-[200px] truncate">
+        {taskName} ({status})
+      </div>
+
       <div className="relative w-56 h-56 mb-8">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="4" className="dark:stroke-gray-700" />
