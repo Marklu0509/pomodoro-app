@@ -94,7 +94,8 @@ model FocusMode {
   alarmSound        String   @default("classic") @map("alarm_sound")
   alertAt25Percent   Boolean  @default(true) @map("alert_at_25_percent")
   isDefault         Boolean  @default(false) @map("is_default")
-
+  musicUrl           String?  @map("music_url")
+  musicType          String   @default("none") @map("music_type") // "none", "youtube", "spotify", "mp3"
   user              User     @relation(fields: [userId], references: [id])
 
   @@map("focus_modes")

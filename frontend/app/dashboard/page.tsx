@@ -119,6 +119,7 @@ export default function DashboardPage() {
         {activeSessionTaskId === "FREE_MODE" && activeMode && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
             <Timer 
+              key={`free-${activeMode.id}`}
               taskId={null} 
               activeMode={activeMode} 
               onSessionComplete={initData} // ★ Now initData is accessible!
@@ -169,7 +170,7 @@ export default function DashboardPage() {
                 </div>
                 {activeSessionTaskId === task.id && activeMode && (
                   <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-700">
-                    <Timer taskId={task.id} activeMode={activeMode} onSessionComplete={initData} />
+                    <Timer key={`${task.id}-${activeMode.id}`} taskId={task.id} activeMode={activeMode} onSessionComplete={initData} />
                   </div>
                 )}
               </div>
