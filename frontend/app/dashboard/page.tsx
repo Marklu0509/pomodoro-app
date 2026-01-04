@@ -7,6 +7,7 @@ import { Task } from "../types/task";
 import Timer from "../components/Timer"; 
 import Navbar from "../components/Navbar"; 
 
+// ★ UPDATE: Sync this interface with Timer.tsx
 interface FocusMode {
   id: number;
   name: string;
@@ -16,7 +17,9 @@ interface FocusMode {
   ambientVolume: number;
   ambientSound: string;
   alarmSound: string;
-  alertAt25Percent: boolean;
+  alertAt25Percent: boolean; // Added
+  musicUrl: string | null;    // Added
+  musicType: string;         // Added
 }
 
 export default function DashboardPage() {
@@ -29,7 +32,7 @@ export default function DashboardPage() {
   const [newTaskEstimate, setNewTaskEstimate] = useState(1);
   const [activeSessionTaskId, setActiveSessionTaskId] = useState<number | "FREE_MODE" | null>(null);
 
-  // ★ FIX: Move initData outside of useEffect so it's accessible everywhere in the component
+  // Fetch data from backend
   const initData = useCallback(async () => {
     try {
       const [taskRes, modeRes] = await Promise.all([
@@ -39,7 +42,7 @@ export default function DashboardPage() {
       setTasks(taskRes.data);
       setFocusModes(modeRes.data);
       
-      // Default to the first mode if none is selected yet
+      // Default to the first mode if none is active
       if (modeRes.data.length > 0 && !activeMode) {
         setActiveMode(modeRes.data[0]);
       }
@@ -50,7 +53,6 @@ export default function DashboardPage() {
     }
   }, [activeMode]);
 
-  // Initial load
   useEffect(() => {
     initData();
   }, [initData]);
@@ -73,7 +75,7 @@ export default function DashboardPage() {
       <Navbar />
       <div className="max-w-4xl mx-auto p-8">
         
-        {/* Mode Selection Tabs */}
+        {/* Profile Selector Tabs */}
         <div className="flex flex-col items-center mb-10">
           <div className="flex bg-gray-200/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-sm">
             {focusModes.map((mode) => (
@@ -115,19 +117,19 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* Timer Display for Free Mode */}
+        {/* Free Mode Timer */}
         {activeSessionTaskId === "FREE_MODE" && activeMode && (
           <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
             <Timer 
-              key={`free-${activeMode.id}`}
+              key={`free-${activeMode.id}`} // Force re-render on mode change
               taskId={null} 
               activeMode={activeMode} 
-              onSessionComplete={initData} // ★ Now initData is accessible!
+              onSessionComplete={initData} 
             />
           </div>
         )}
 
-        {/* Add Task Form */}
+        {/* New Task Form */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8">
           <form onSubmit={handleCreateTask} className="flex gap-4 items-end">
             <div className="flex-grow">
@@ -170,7 +172,12 @@ export default function DashboardPage() {
                 </div>
                 {activeSessionTaskId === task.id && activeMode && (
                   <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-700">
-                    <Timer key={`${task.id}-${activeMode.id}`} taskId={task.id} activeMode={activeMode} onSessionComplete={initData} />
+                    <Timer 
+                      key={`task-${task.id}-${activeMode.id}`}
+                      taskId={task.id} 
+                      activeMode={activeMode} 
+                      onSessionComplete={initData} 
+                    />
                   </div>
                 )}
               </div>
