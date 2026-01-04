@@ -72,7 +72,7 @@ model Settings {
   notificationsEnabled Boolean @default(true) @map("notifications_enabled") // Browser notifications
   miniClockMode     Boolean @default(false) @map("mini_clock_mode") // Default visual mode
   lockWindow        Boolean @default(false) @map("lock_window") // Prevent accidental closing/moving (if supported)
-
+  theme              String   @default("system") // "light", "dark", "system"
   user              User    @relation(fields: [userId], references: [id])
 
   @@map("settings")
