@@ -40,6 +40,20 @@ export default function SettingsPage() {
     if (!selectedMode) return;
     setSelectedMode({ ...selectedMode, [field]: value });
   };
+  
+  const applyTheme = (theme: string) => {
+    const root = window.document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else if (theme === "light") {
+      root.classList.remove("dark");
+    } else {
+      // System logic
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (systemDark) root.classList.add("dark");
+      else root.classList.remove("dark");
+    }
+  };
 
   const handleSave = async () => {
     if (!selectedMode) return;
@@ -157,7 +171,32 @@ export default function SettingsPage() {
                     <option value="cafe">London Cafe</option>
                   </select>
                 </div>
-
+                {/* --- Appearance Section --- */}
+                <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Appearance</h4>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-2">Theme Preference</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {["light", "dark", "system"].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            handleFieldChange("theme", t);
+                            applyTheme(t); // 立即預覽效果
+                          }}
+                          className={`py-3 rounded-xl border-2 font-bold text-xs uppercase tracking-tighter transition-all ${
+                            selectedMode.theme === t 
+                              ? "border-blue-600 bg-blue-50 text-blue-600 dark:bg-blue-900/20" 
+                              : "border-gray-100 dark:border-gray-800 text-gray-400"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 {/* ★ Music Integration UI */}
                 <div className="p-4 border border-blue-100 dark:border-blue-900 rounded-2xl bg-blue-50/30 dark:bg-blue-900/10">
                   <label className="text-xs font-bold text-blue-600 dark:text-blue-400 block mb-3 uppercase">External Music Link</label>

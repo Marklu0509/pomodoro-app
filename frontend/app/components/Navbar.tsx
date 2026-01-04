@@ -9,12 +9,26 @@ export default function Navbar() {
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    // Optional: Get user name from local storage or decode token
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/");
-    }
-  }, [router]);
+    const initTheme = async () => {
+      try {
+        const res = await api.get("/settings");
+        const { theme } = res.data;
+        
+        const root = window.document.documentElement;
+        const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+        if (theme === "dark" || (theme === "system" && systemDark)) {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+      } catch (err) {
+        console.error("Theme init failed", err);
+      }
+    };
+    
+    initTheme();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
