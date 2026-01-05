@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import api from "../../utils/api";
 import Navbar from "../components/Navbar";
 
+/**
+ * FocusMode Interface 
+ * MUST be synchronized with your Prisma Schema and Timer component.
+ */
 interface FocusMode {
   id: number;
   name: string;
@@ -15,8 +19,9 @@ interface FocusMode {
   ambientSound: string;
   alarmSound: string;
   alertAt25Percent: boolean;
-  musicUrl: string | null;   // ★ New field
-  musicType: string;         // ★ New field
+  musicUrl: string | null;
+  musicType: string;
+  theme: string; // ★ Fixed: Added theme to resolve the 'keyof FocusMode' error
 }
 
 export default function SettingsPage() {
@@ -25,66 +30,111 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => { fetchModes(); }, []);
+  // Initialize data on mount
+  useEffect(() => {
+    fetchModes();
+  }, []);
 
+  /**
+   * Fetches all focus profiles from the backend
+   */
   const fetchModes = async () => {
     try {
       const res = await api.get("/focus-modes");
       setModes(res.data);
-      if (res.data.length > 0) setSelectedMode(res.data[0]);
-    } catch (err) { console.error("Load failed", err); }
-    finally { setIsLoading(false); }
+      if (res.data.length > 0) {
+        setSelectedMode(res.data[0]);
+        // Apply theme from the first profile on load
+        applyTheme(res.data[0].theme);
+      }
+    } catch (err) {
+      console.error("Failed to load modes", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  /**
+   * Generic handler for updating local state fields
+   * @param field - Must be a valid key of the FocusMode interface
+   */
   const handleFieldChange = (field: keyof FocusMode, value: any) => {
     if (!selectedMode) return;
     setSelectedMode({ ...selectedMode, [field]: value });
   };
 
+  /**
+   * Persists changes to the backend
+   */
   const handleSave = async () => {
     if (!selectedMode) return;
     setIsSaving(true);
     try {
       await api.patch(`/focus-modes/${selectedMode.id}`, selectedMode);
       setModes(modes.map(m => m.id === selectedMode.id ? selectedMode : m));
-      alert("Settings saved!");
-    } catch (err) { alert("Save failed."); }
-    finally { setIsSaving(false); }
+      alert("Settings saved successfully!");
+    } catch (err) {
+      alert("Failed to save settings.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /**
+   * Helper to apply Dark/Light/System theme to the HTML root
+   */
+  const applyTheme = (themeValue: string) => {
+    const root = window.document.documentElement;
+    if (themeValue === "dark") {
+      root.classList.add("dark");
+    } else if (themeValue === "light") {
+      root.classList.remove("dark");
+    } else {
+      // System: follow OS preference
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (systemDark) root.classList.add("dark");
+      else root.classList.remove("dark");
+    }
   };
 
   const handleAddNew = async () => {
     try {
-      const res = await api.post("/focus-modes", { name: "New Profile" });
+      const res = await api.post("/focus-modes", { name: "New Profile", theme: "system" });
       setModes((prev) => [...prev, res.data]);
-      setSelectedMode(res.data); 
-    } catch (err) { alert("Failed to add profile."); }
+      setSelectedMode(res.data);
+    } catch (err) {
+      alert("Failed to create profile.");
+    }
   };
 
-  const handleDeleteSelected = async () => {
+  const handleDelete = async () => {
     if (!selectedMode || modes.length <= 1) return;
-    if (!confirm(`Delete profile "${selectedMode.name}"?`)) return;
+    if (!confirm("Delete this profile?")) return;
     try {
       await api.delete(`/focus-modes/${selectedMode.id}`);
-      const remaining = modes.filter((m) => m.id !== selectedMode.id);
+      const remaining = modes.filter(m => m.id !== selectedMode.id);
       setModes(remaining);
-      setSelectedMode(remaining[0] ?? null);
-    } catch (err) { alert("Delete failed."); }
+      setSelectedMode(remaining[0]);
+    } catch (err) {
+      alert("Delete failed.");
+    }
   };
 
   if (isLoading) return <div className="p-8 text-center dark:text-white">Loading Profiles...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-500">
       <Navbar />
       <div className="max-w-6xl mx-auto p-8 flex flex-col lg:flex-row gap-8">
-        {/* Sidebar */}
+        
+        {/* Left Sidebar: List of Profiles */}
         <div className="w-full lg:w-64 space-y-2">
-          <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Focus Profiles</h3>
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Profiles</h3>
           {modes.map((mode) => (
             <button
               key={mode.id}
               onClick={() => setSelectedMode(mode)}
-              className={`w-full text-left px-4 py-3 rounded-xl font-bold transition-all ${
+              className={`w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition-all ${
                 selectedMode?.id === mode.id
                   ? "bg-blue-600 text-white shadow-lg"
                   : "text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800"
@@ -93,86 +143,92 @@ export default function SettingsPage() {
               {mode.name}
             </button>
           ))}
-          <button type="button" onClick={handleAddNew} className="w-full mt-4 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-gray-400 font-bold hover:text-blue-500 transition-all">
-            + Add Profile
+          <button onClick={handleAddNew} className="w-full mt-4 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 font-bold text-sm hover:border-blue-500 hover:text-blue-500 transition-all">
+            + ADD NEW
           </button>
         </div>
 
-        {/* Editor */}
+        {/* Right Editor: Detailed Settings */}
         {selectedMode && (
-          <div className="flex-grow bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
-            <div className="flex justify-between items-center">
-              <input type="text" value={selectedMode.name} onChange={(e) => handleFieldChange("name", e.target.value)} className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3" />
+          <div className="flex-grow bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex justify-between items-center mb-10">
+              <input
+                type="text"
+                value={selectedMode.name}
+                onChange={(e) => handleFieldChange("name", e.target.value)}
+                className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3"
+              />
               <div className="flex gap-3">
-                <button type="button" onClick={handleDeleteSelected} disabled={modes.length <= 1} className="px-4 py-2.5 rounded-xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 disabled:opacity-50">Delete</button>
-                <button type="button" onClick={handleSave} disabled={isSaving} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg disabled:opacity-50">{isSaving ? "Saving..." : "Save Changes"}</button>
+                <button onClick={handleDelete} disabled={modes.length <= 1} className="px-4 py-2.5 rounded-xl font-bold text-xs text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-30">DELETE</button>
+                <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-black text-xs tracking-widest hover:shadow-lg disabled:opacity-50">
+                  {isSaving ? "SAVING..." : "SAVE CHANGES"}
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {/* Section 1: Timer & Alerts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* --- Timer Logic --- */}
               <div className="space-y-6">
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Timer Settings</h4>
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Intervals (Min)</h4>
                 <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Work</label>
-                    <input type="number" value={selectedMode.workDuration} onChange={(e) => handleFieldChange("workDuration", parseInt(e.target.value))} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Short</label>
-                    <input type="number" value={selectedMode.shortBreakDuration} onChange={(e) => handleFieldChange("shortBreakDuration", parseInt(e.target.value))} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Long</label>
-                    <input type="number" value={selectedMode.longBreakDuration} onChange={(e) => handleFieldChange("longBreakDuration", parseInt(e.target.value))} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white" />
-                  </div>
+                  {["workDuration", "shortBreakDuration", "longBreakDuration"].map((field) => (
+                    <div key={field}>
+                      <label className="text-[10px] text-gray-400 font-bold uppercase mb-1 block">{field.replace('Duration', '')}</label>
+                      <input
+                        type="number"
+                        value={selectedMode[field as keyof FocusMode] as number}
+                        onChange={(e) => handleFieldChange(field as keyof FocusMode, parseInt(e.target.value))}
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white font-bold"
+                      />
+                    </div>
+                  ))}
                 </div>
-                <label className="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                  <input type="checkbox" checked={selectedMode.alertAt25Percent} onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)} className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Chime at 75%, 50%, 25%</span>
+                
+                <label className="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={selectedMode.alertAt25Percent}
+                    onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)}
+                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-tight">Chime at 75%, 50%, 25%</span>
                 </label>
               </div>
 
-              {/* Section 2: Audio & Music (FIXED ALARM HERE) */}
+              {/* --- Appearance & Theme --- */}
               <div className="space-y-6">
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Audio & Music</h4>
-                
-                {/* Fixed Alarm Selection */}
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Alarm Sound (Notification)</label>
-                  <select value={selectedMode.alarmSound} onChange={(e) => handleFieldChange("alarmSound", e.target.value)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white">
-                    <option value="classic">Classic Bell</option>
-                    <option value="digital">Digital Beep</option>
-                    <option value="bird">Morning Bird</option>
-                  </select>
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Appearance</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {["light", "dark", "system"].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        handleFieldChange("theme", t);
+                        applyTheme(t);
+                      }}
+                      className={`py-3 rounded-xl border-2 font-black text-[10px] uppercase transition-all ${
+                        selectedMode.theme === t 
+                          ? "border-blue-600 bg-blue-50 text-blue-600 dark:bg-blue-900/20" 
+                          : "border-gray-50 dark:border-gray-900 text-gray-400 hover:border-gray-200"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
 
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Ambient Background Sound</label>
-                  <select value={selectedMode.ambientSound} onChange={(e) => handleFieldChange("ambientSound", e.target.value)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white">
-                    <option value="none">None</option>
-                    <option value="ticking">Classic Ticking</option>
-                    <option value="rain">Soft Rain</option>
-                    <option value="forest">Forest Ambience</option>
-                    <option value="cafe">London Cafe</option>
-                  </select>
-                </div>
-
-                {/* ★ Music Integration UI */}
-                <div className="p-4 border border-blue-100 dark:border-blue-900 rounded-2xl bg-blue-50/30 dark:bg-blue-900/10">
-                  <label className="text-xs font-bold text-blue-600 dark:text-blue-400 block mb-3 uppercase">External Music Link</label>
-                  <div className="space-y-3">
-                    <select value={selectedMode.musicType} onChange={(e) => handleFieldChange("musicType", e.target.value)} className="w-full p-2.5 bg-white dark:bg-gray-900 rounded-lg text-sm dark:text-white border-none shadow-sm">
-                      <option value="none">No Music</option>
-                      <option value="youtube">YouTube Embed</option>
-                      <option value="spotify">Spotify Embed</option>
-                      <option value="mp3">Direct MP3 URL</option>
-                    </select>
-                    {selectedMode.musicType !== 'none' && (
-                      <input type="text" placeholder="Paste link here..." value={selectedMode.musicUrl || ''} onChange={(e) => handleFieldChange("musicUrl", e.target.value)} className="w-full p-2.5 bg-white dark:bg-gray-900 rounded-lg text-sm dark:text-white border-none shadow-sm placeholder:text-gray-400" />
-                    )}
-                  </div>
-                </div>
+                {/* --- Audio Selection --- */}
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pt-4">Audio Notification</h4>
+                <select
+                  value={selectedMode.alarmSound}
+                  onChange={(e) => handleFieldChange("alarmSound", e.target.value)}
+                  className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white font-bold text-sm"
+                >
+                  <option value="classic">Classic Bell</option>
+                  <option value="digital">Digital Beep</option>
+                  <option value="bird">Morning Bird</option>
+                </select>
               </div>
             </div>
           </div>
