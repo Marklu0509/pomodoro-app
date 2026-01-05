@@ -15,6 +15,7 @@ interface FocusMode {
   ambientSound: string;
   alarmSound: string;
   alertAt25Percent: boolean;
+  theme?: "light" | "dark" | "system";
   musicUrl: string | null;   // ★ New field
   musicType: string;         // ★ New field
 }
@@ -59,7 +60,8 @@ export default function SettingsPage() {
     if (!selectedMode) return;
     setIsSaving(true);
     try {
-      await api.patch(`/focus-modes/${selectedMode.id}`, selectedMode);
+      const { theme, ...payload } = selectedMode;
+      await api.patch(`/focus-modes/${selectedMode.id}`, payload);
       setModes(modes.map(m => m.id === selectedMode.id ? selectedMode : m));
       alert("Settings saved!");
     } catch (err) { alert("Save failed."); }
