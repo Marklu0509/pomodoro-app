@@ -70,7 +70,15 @@ export default function SettingsPage() {
 
   const handleAddNew = async () => {
     try {
-      const res = await api.post("/focus-modes", { name: "New Profile" });
+      const res = await api.post("/focus-modes", { name: "New Profile",
+      workDuration: 25,
+      shortBreakDuration: 5,
+      longBreakDuration: 15,
+      musicType: "none",
+      musicUrl: "",
+      theme: "system",
+      alertAt25Percent: true
+    });
       setModes((prev) => [...prev, res.data]);
       setSelectedMode(res.data); 
     } catch (err) { alert("Failed to add profile."); }
