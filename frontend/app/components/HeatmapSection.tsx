@@ -50,11 +50,11 @@ export default function HeatmapSection() {
 
   // Helper: Get color scale based on minutes focused
   const getColorClass = (minutes: number) => {
-    if (minutes === 0) return "bg-gray-100";
-    if (minutes < 30) return "bg-green-200";
-    if (minutes < 60) return "bg-green-400";
-    if (minutes < 120) return "bg-green-600";
-    return "bg-green-800"; // Deep green for heavy focus
+    if (minutes === 0) return "bg-gray-100 dark:bg-gray-800";
+    if (minutes < 30) return "bg-green-200 dark:bg-green-900/40";
+    if (minutes < 60) return "bg-green-400 dark:bg-green-800/60";
+    if (minutes < 120) return "bg-green-600 dark:bg-green-700/70";
+    return "bg-green-800 dark:bg-green-600"; // Deep green for heavy focus
   };
 
   // Helper: Find data for a specific date
@@ -98,7 +98,7 @@ export default function HeatmapSection() {
           />
         </div>
         {/* Legend */}
-        <div className="flex items-center justify-end gap-2 text-xs text-gray-500 mt-2">
+        <div className="flex items-center justify-end gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
           <span>Less</span>
           <div className="w-3 h-3 bg-[#ebedf0]"></div>
           <div className="w-3 h-3 bg-[#c6e48b]"></div>
@@ -131,16 +131,16 @@ export default function HeatmapSection() {
         <div className="flex justify-between items-center mb-4">
           <button 
              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-             className="p-2 hover:bg-gray-100 rounded-full"
+             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
           >
             ←
           </button>
-          <h3 className="font-bold text-lg text-gray-700">
+          <h3 className="font-bold text-lg text-gray-700 dark:text-gray-200">
             {format(currentMonth, "MMMM yyyy")}
           </h3>
           <button 
              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-             className="p-2 hover:bg-gray-100 rounded-full"
+             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
           >
             →
           </button>
@@ -231,6 +231,12 @@ export default function HeatmapSection() {
         .react-calendar-heatmap .color-scale-2 { fill: #7bc96f; }
         .react-calendar-heatmap .color-scale-3 { fill: #239a3b; }
         .react-calendar-heatmap .color-scale-4 { fill: #196127; }
+        .dark .react-calendar-heatmap text { fill: #6b7280; }
+        .dark .react-calendar-heatmap .color-empty { fill: #1f2937; }
+        .dark .react-calendar-heatmap .color-scale-1 { fill: #14532d; }
+        .dark .react-calendar-heatmap .color-scale-2 { fill: #166534; }
+        .dark .react-calendar-heatmap .color-scale-3 { fill: #15803d; }
+        .dark .react-calendar-heatmap .color-scale-4 { fill: #22c55e; }
         .react-calendar-heatmap rect:hover { stroke: #555; stroke-width: 1px; }
       `}</style>
     </div>

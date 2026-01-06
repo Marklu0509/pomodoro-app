@@ -111,7 +111,7 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center">
               <input type="text" value={selectedMode.name} onChange={(e) => handleFieldChange("name", e.target.value)} className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3" />
               <div className="flex gap-3">
-                <button type="button" onClick={handleDeleteSelected} disabled={modes.length <= 1} className="px-4 py-2.5 rounded-xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 disabled:opacity-50">Delete</button>
+                <button type="button" onClick={handleDeleteSelected} disabled={modes.length <= 1} className="px-4 py-2.5 rounded-xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50">Delete</button>
                 <button type="button" onClick={handleSave} disabled={isSaving} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg disabled:opacity-50">{isSaving ? "Saving..." : "Save Changes"}</button>
               </div>
             </div>

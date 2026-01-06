@@ -60,17 +60,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 dark:bg-gray-950 p-4">
+      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden border border-gray-100 dark:border-gray-800">
         
         {/* --- tabs--- */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 dark:border-gray-800">
           <button
             onClick={() => { setIsLogin(true); setError(""); }}
             className={`flex-1 py-4 text-center font-semibold transition-colors ${
               isLogin 
-                ? "bg-white text-blue-600 border-b-2 border-blue-600" 
-                : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600" 
+                : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             }`}
           >
             Sign In
@@ -79,8 +79,8 @@ export default function AuthPage() {
             onClick={() => { setIsLogin(false); setError(""); }}
             className={`flex-1 py-4 text-center font-semibold transition-colors ${
               !isLogin 
-                ? "bg-white text-blue-600 border-b-2 border-blue-600" 
-                : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600" 
+                : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             }`}
           >
             Sign Up
@@ -88,12 +88,12 @@ export default function AuthPage() {
         </div>
 
         <div className="p-8">
-          <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
+          <h2 className="text-xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">
             {isLogin ? "Welcome back" : "create a new account"}
           </h2>
           
           {error && (
-            <div className="bg-red-50 text-red-500 text-sm p-3 rounded-md mb-4 text-center border border-red-100">
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-300 text-sm p-3 rounded-md mb-4 text-center border border-red-100 dark:border-red-900">
               {error}
             </div>
           )}
@@ -103,12 +103,12 @@ export default function AuthPage() {
             {/* only signup mode has name field */}
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">username</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">username</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="block w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-gray-100"
                   placeholder="Your Name"
                   suppressHydrationWarning
                 />
@@ -116,12 +116,12 @@ export default function AuthPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                className="block w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-gray-100"
                 placeholder="name@example.com"
                 required
                 suppressHydrationWarning
@@ -129,12 +129,12 @@ export default function AuthPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                className="block w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-gray-100"
                 placeholder="••••••••"
                 required
                 suppressHydrationWarning
@@ -145,7 +145,7 @@ export default function AuthPage() {
               type="submit"
               disabled={isLoading}
               className={`w-full py-3 px-4 text-white font-semibold rounded-md transition duration-200 mt-4 ${
-                isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                isLoading ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500"
               }`}
             >
               {isLoading 
