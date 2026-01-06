@@ -70,9 +70,9 @@ export default function Navbar() {
                 key={t.id}
                 onClick={() => handleThemeChange(t.id)}
                 className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all ${
-                  currentTheme === t.id 
-                    ? "bg-white dark:bg-gray-700 shadow-sm scale-110" 
-                    : "opacity-40 hover:opacity-100"
+                  currentTheme === t.id
+                    ? "bg-white dark:bg-gray-700 shadow-sm scale-110 text-gray-900 dark:text-white"
+                    : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
                 title={`Switch to ${t.id} mode`}
               >
