@@ -1,90 +1,85 @@
 // frontend/app/components/Navbar.tsx
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import api from "../../utils/api";
+import { applyTheme } from "../../utils/theme";
 
 export default function Navbar() {
+  const [currentTheme, setCurrentTheme] = useState("system");
   const router = useRouter();
-  const [userName, setUserName] = useState("");
 
+  // 1. Initial Load: Get theme from localStorage or Backend
   useEffect(() => {
-    const initTheme = async () => {
-      try {
-        const res = await api.get("/settings");
-        const { theme } = res.data;
-        
-        const root = window.document.documentElement;
-        const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-        if (theme === "dark" || (theme === "system" && systemDark)) {
-          root.classList.add("dark");
-        } else {
-          root.classList.remove("dark");
-        }
-      } catch (err) {
-        console.error("Theme init failed", err);
-      }
-    };
+    const savedTheme = localStorage.getItem("theme-preference") || "system";
+    setCurrentTheme(savedTheme);
+    applyTheme(savedTheme);
     
-    initTheme();
+    // Optional: Sync with backend
+    api.get("/settings").then(res => {
+      if (res.data.theme) {
+        setCurrentTheme(res.data.theme);
+        applyTheme(res.data.theme);
+      }
+    });
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/");
-  };
-
-  // navigate to main page (Dashboard)
-  const goHome = () => {
-    router.push("/dashboard");
+  // 2. Handle Theme Toggle
+  const handleThemeChange = async (theme: string) => {
+    setCurrentTheme(theme);
+    applyTheme(theme);
+    try {
+      // Sync preference to backend for multi-device support
+      await api.patch("/settings", { theme });
+    } catch (e) {
+      console.error("Failed to sync theme to server", e);
+    }
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-10">
-      {/* 
-        1.  onClick={goHome} clickable
-        2.  cursor-pointer 
-        3.  hover 
-      */}
-      <div 
-        onClick={goHome} 
-        className="flex items-center gap-2 cursor-pointer group"
-      >
-        <div className="bg-blue-600 p-2 rounded-lg group-hover:bg-blue-700 transition-colors">
-          <span className="text-white font-bold text-xl">🍅</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xl font-bold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">
-            Pomodoro Focus
+    <nav className="border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex justify-between items-center">
+        <div className="flex items-center gap-8">
+          <span className="text-xl font-black tracking-tighter text-blue-600 dark:text-blue-400 cursor-pointer" onClick={() => router.push('/dashboard')}>
+            POMO.
           </span>
-          {/*  Keep going ( linking) */}
-          <span className="text-xs text-gray-400 font-medium group-hover:text-gray-600">
-            Keep going, stay focused.
-          </span>
+          <div className="hidden md:flex gap-6">
+            <button onClick={() => router.push('/dashboard')} className="text-sm font-bold text-gray-500 hover:text-blue-500 transition-colors">Dashboard</button>
+            <button onClick={() => router.push('/settings')} className="text-sm font-bold text-gray-500 hover:text-blue-500 transition-colors">Settings</button>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => router.push("/stats")}
-          className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-        >
-          Stats
-        </button>
-        <button
-          onClick={() => router.push("/settings")}
-          className="text-sm font-medium text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-        >
-          Settings
-        </button>
-        <button
-          onClick={handleLogout}
-          className="text-sm font-medium text-red-600 hover:text-red-700 px-4 py-2 border border-red-100 rounded-md hover:bg-red-50 transition-colors"
-        >
-          Logout
-        </button>
+        {/* --- Phase 17: Theme Switcher UI --- */}
+        <div className="flex items-center gap-4">
+          <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+            {[
+              { id: 'light', icon: '☀️' },
+              { id: 'dark', icon: '🌙' },
+              { id: 'system', icon: '💻' }
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => handleThemeChange(t.id)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all ${
+                  currentTheme === t.id 
+                    ? "bg-white dark:bg-gray-700 shadow-sm scale-110" 
+                    : "opacity-40 hover:opacity-100"
+                }`}
+                title={`Switch to ${t.id} mode`}
+              >
+                {t.icon}
+              </button>
+            ))}
+          </div>
+          
+          <button 
+            onClick={() => { localStorage.removeItem('token'); router.push('/login'); }}
+            className="text-xs font-black text-gray-400 hover:text-red-500 uppercase tracking-widest ml-2"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </nav>
   );

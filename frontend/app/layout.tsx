@@ -17,15 +17,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      {/* 3. Apply the font class to the body */}
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* ★ This inline script runs BEFORE React loads to prevent flashing */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            const theme = localStorage.getItem('theme-preference') || 'system';
+            const supportDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'dark' || (theme === 'system' && supportDark)) {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+          } catch (e) {}
+        `}} />
+      </head>
+      <body>
         {children}
       </body>
     </html>
