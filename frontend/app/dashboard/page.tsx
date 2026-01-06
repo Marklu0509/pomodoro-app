@@ -103,7 +103,7 @@ export default function DashboardPage() {
                 type="text" 
                 value={newTaskTitle} 
                 onChange={(e) => setNewTaskTitle(e.target.value)} 
-                className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl dark:text-white"
+                className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-gray-900 dark:text-blue-400 placeholder-gray-500 dark:placeholder-blue-400"
                 placeholder="New Task..."
               />
             </div>
