@@ -21,7 +21,6 @@ interface FocusMode {
   alertAt25Percent: boolean;
   musicUrl: string | null;
   musicType: string;
-  theme: string; // ★ Fixed: Added theme to resolve the 'keyof FocusMode' error
 }
 
 export default function SettingsPage() {
@@ -44,8 +43,6 @@ export default function SettingsPage() {
       setModes(res.data);
       if (res.data.length > 0) {
         setSelectedMode(res.data[0]);
-        // Apply theme from the first profile on load
-        applyTheme(res.data[0].theme);
       }
     } catch (err) {
       console.error("Failed to load modes", err);
@@ -80,26 +77,9 @@ export default function SettingsPage() {
     }
   };
 
-  /**
-   * Helper to apply Dark/Light/System theme to the HTML root
-   */
-  const applyTheme = (themeValue: string) => {
-    const root = window.document.documentElement;
-    if (themeValue === "dark") {
-      root.classList.add("dark");
-    } else if (themeValue === "light") {
-      root.classList.remove("dark");
-    } else {
-      // System: follow OS preference
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (systemDark) root.classList.add("dark");
-      else root.classList.remove("dark");
-    }
-  };
-
   const handleAddNew = async () => {
     try {
-      const res = await api.post("/focus-modes", { name: "New Profile", theme: "system" });
+      const res = await api.post("/focus-modes", { name: "New Profile" });
       setModes((prev) => [...prev, res.data]);
       setSelectedMode(res.data);
     } catch (err) {
@@ -195,31 +175,9 @@ export default function SettingsPage() {
                 </label>
               </div>
 
-              {/* --- Appearance & Theme --- */}
+              {/* --- Audio Selection --- */}
               <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Appearance</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {["light", "dark", "system"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        handleFieldChange("theme", t);
-                        applyTheme(t);
-                      }}
-                      className={`py-3 rounded-xl border-2 font-black text-[10px] uppercase transition-all ${
-                        selectedMode.theme === t 
-                          ? "border-blue-600 bg-blue-50 text-blue-600 dark:bg-blue-900/20" 
-                          : "border-gray-50 dark:border-gray-900 text-gray-400 hover:border-gray-200"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-
-                {/* --- Audio Selection --- */}
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pt-4">Audio Notification</h4>
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Audio Notification</h4>
                 <select
                   value={selectedMode.alarmSound}
                   onChange={(e) => handleFieldChange("alarmSound", e.target.value)}

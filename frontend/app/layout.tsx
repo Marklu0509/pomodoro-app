@@ -24,13 +24,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* ★ This inline script runs BEFORE React loads to prevent flashing */}
         <script dangerouslySetInnerHTML={{ __html: `
           try {
-            const theme = localStorage.getItem('theme-preference') || 'system';
+            const raw = localStorage.getItem('theme-preference');
+            const theme = raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
             const supportDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             if (theme === 'dark' || (theme === 'system' && supportDark)) {
               document.documentElement.classList.add('dark');
             } else {
               document.documentElement.classList.remove('dark');
             }
+            localStorage.setItem('theme-preference', theme);
           } catch (e) {}
         `}} />
       </head>

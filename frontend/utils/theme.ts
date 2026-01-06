@@ -4,10 +4,24 @@
  * Applies the theme to the HTML document element.
  * This adds or removes the 'dark' class based on the theme preference.
  */
-export const applyTheme = (theme: string) => {
+export type ThemePreference = "light" | "dark" | "system";
+
+const STORAGE_KEY = "theme-preference";
+
+const normalizeTheme = (theme: string | null | undefined): ThemePreference => {
+  if (theme === "light" || theme === "dark" || theme === "system") return theme;
+  return "system";
+};
+
+export const getStoredTheme = (): ThemePreference => {
+  if (typeof window === "undefined") return "system";
+  return normalizeTheme(localStorage.getItem(STORAGE_KEY));
+};
+
+export const applyTheme = (theme: ThemePreference) => {
   const root = window.document.documentElement;
-  const isDark = 
-    theme === "dark" || 
+  const isDark =
+    theme === "dark" ||
     (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   if (isDark) {
@@ -17,5 +31,5 @@ export const applyTheme = (theme: string) => {
   }
 
   // Store in localStorage for instant retrieval on page load
-  localStorage.setItem("theme-preference", theme);
+  localStorage.setItem(STORAGE_KEY, theme);
 };

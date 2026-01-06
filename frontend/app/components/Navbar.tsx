@@ -3,39 +3,45 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "../../utils/api";
-import { applyTheme } from "../../utils/theme";
+import { applyTheme, getStoredTheme, ThemePreference } from "../../utils/theme";
 
 export default function Navbar() {
-  const [currentTheme, setCurrentTheme] = useState("system");
+  const [currentTheme, setCurrentTheme] = useState<ThemePreference>("system");
   const router = useRouter();
 
-  // 1. Initial Load: Get theme from localStorage or Backend
+  // 1. Initial Load: Get theme from localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme-preference") || "system";
+    const savedTheme = getStoredTheme();
     setCurrentTheme(savedTheme);
     applyTheme(savedTheme);
-    
-    // Optional: Sync with backend
-    api.get("/settings").then(res => {
-      if (res.data.theme) {
-        setCurrentTheme(res.data.theme);
-        applyTheme(res.data.theme);
-      }
-    });
   }, []);
 
   // 2. Handle Theme Toggle
-  const handleThemeChange = async (theme: string) => {
+  const handleThemeChange = (theme: ThemePreference) => {
     setCurrentTheme(theme);
     applyTheme(theme);
-    try {
-      // Sync preference to backend for multi-device support
-      await api.patch("/settings", { theme });
-    } catch (e) {
-      console.error("Failed to sync theme to server", e);
-    }
   };
+
+  // 3. React to system theme changes when in "system" mode
+  useEffect(() => {
+    if (currentTheme !== "system") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => applyTheme("system");
+
+    if (media.addEventListener) {
+      media.addEventListener("change", handleChange);
+    } else {
+      media.addListener(handleChange);
+    }
+
+    return () => {
+      if (media.removeEventListener) {
+        media.removeEventListener("change", handleChange);
+      } else {
+        media.removeListener(handleChange);
+      }
+    };
+  }, [currentTheme]);
 
   return (
     <nav className="border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-50">

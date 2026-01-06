@@ -20,7 +20,6 @@ interface FocusMode {
   alertAt25Percent: boolean;
   musicUrl: string | null;
   musicType: string;
-  theme: string; 
 }
 
 export default function DashboardPage() {
