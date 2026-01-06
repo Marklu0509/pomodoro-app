@@ -59,11 +59,13 @@ export default function Navbar() {
         {/* --- Phase 17: Theme Switcher UI --- */}
         <div className="flex items-center gap-4">
           <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-            {[
-              { id: 'light', icon: '☀️' },
-              { id: 'dark', icon: '🌙' },
-              { id: 'system', icon: '💻' }
-            ].map((t) => (
+            {(
+              [
+                { id: "light", icon: "☀️" },
+                { id: "dark", icon: "🌙" },
+                { id: "system", icon: "💻" },
+              ] as const satisfies ReadonlyArray<{ id: ThemePreference; icon: string }>
+            ).map((t) => (
               <button
                 key={t.id}
                 onClick={() => handleThemeChange(t.id)}
