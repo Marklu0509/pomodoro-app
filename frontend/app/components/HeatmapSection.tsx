@@ -150,7 +150,7 @@ export default function HeatmapSection() {
         <div className="grid grid-cols-7 gap-2">
           {/* Weekday Labels */}
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-            <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">
+            <div key={d} className="text-center text-xs font-semibold text-gray-400 dark:text-gray-500 py-1">
               {d}
             </div>
           ))}
@@ -169,13 +169,13 @@ export default function HeatmapSection() {
               <div 
                 key={day.toString()}
                 className={`
-                  h-10 md:h-14 rounded-md border border-gray-50 flex flex-col items-center justify-center relative group
+                  h-10 md:h-14 rounded-md border border-gray-50 dark:border-gray-800 flex flex-col items-center justify-center relative group
                   ${getColorClass(minutes)}
                   ${isToday ? "ring-2 ring-blue-500" : ""}
                 `}
                 title={`${format(day, "yyyy-MM-dd")}: ${minutes} mins`}
               >
-                <span className={`text-xs ${minutes > 60 ? 'text-white' : 'text-gray-600'} font-medium z-10`}>
+                <span className={`text-xs ${minutes > 60 ? 'text-white' : 'text-gray-600 dark:text-gray-300'} font-medium z-10`}>
                   {format(day, "d")}
                 </span>
                 
@@ -193,19 +193,19 @@ export default function HeatmapSection() {
     );
   };
 
-  if (loading) return <div className="p-4 text-center text-gray-400">Loading heatmap...</div>;
+  if (loading) return <div className="p-4 text-center text-gray-400 dark:text-gray-500">Loading heatmap...</div>;
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 mb-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Focus History</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Focus History</h2>
         
         {/* Toggle Buttons */}
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           <button
             onClick={() => setViewMode("MONTH")}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-              viewMode === "MONTH" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              viewMode === "MONTH" ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             }`}
           >
             Monthly
@@ -213,7 +213,7 @@ export default function HeatmapSection() {
           <button
             onClick={() => setViewMode("YEAR")}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-              viewMode === "YEAR" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              viewMode === "YEAR" ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
             }`}
           >
             Yearly
