@@ -96,7 +96,7 @@ model FocusMode {
   musicUrl           String?  @map("music_url")
   musicType          String   @default("none") @map("music_type") // "none", "youtube", "spotify", "mp3"
   user              User     @relation(fields: [userId], references: [id])
-
+  musicVolume      Int      @default(50) 
   @@map("focus_modes")
 }
 // --------------------------------------
@@ -145,6 +145,6 @@ model PomodoroSession {
   // Relationships
   user            User     @relation(fields: [userId], references: [id])
   task            Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  
+
   @@map("pomodoro_sessions")
 }
