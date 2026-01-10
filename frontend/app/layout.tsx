@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           } catch (e) {}
         `}} />
       </head>
-      <body>
+      <body className={inter.className}>
         {children}
       </body>
     </html>
