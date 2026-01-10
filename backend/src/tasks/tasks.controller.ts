@@ -21,13 +21,11 @@ export class TasksController {
   findAll(@GetUser() user: User) {
     return this.tasksService.findAll(user.id);
   }
-// DELETE /tasks/all (Notice: Put this BEFORE /:id to avoid route conflict)
   @Delete('all')
   removeAllTasks(@GetUser('id') userId: number) {
     return this.tasksService.removeAll(userId);
   }
 
-  // DELETE /tasks/:id
   @Delete(':id')
   removeTask(@Param('id', ParseIntPipe) id: number, @GetUser('id') userId: number) {
     return this.tasksService.remove(id, userId);

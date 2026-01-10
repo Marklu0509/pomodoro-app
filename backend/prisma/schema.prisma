@@ -144,7 +144,7 @@ model PomodoroSession {
 
   // Relationships
   user            User     @relation(fields: [userId], references: [id])
-  task            Task?    @relation(fields: [taskId], references: [id])
-
+  task            Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
   @@map("pomodoro_sessions")
 }
