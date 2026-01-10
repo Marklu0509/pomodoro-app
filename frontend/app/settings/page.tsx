@@ -4,7 +4,12 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/api";
 import Navbar from "../components/Navbar";
+import { applyTheme } from "../../utils/theme";
 
+/**
+ * Interface representing the Focus Profile.
+ * Simplified to focus on YouTube as the primary music source.
+ */
 interface FocusMode {
   id: number;
   name: string;
@@ -15,8 +20,8 @@ interface FocusMode {
   ambientSound: string;
   alarmSound: string;
   alertAt25Percent: boolean;
-  musicUrl: string | null;   // ★ New field
-  musicType: string;         // ★ New field
+  musicUrl: string | null;
+  musicType: string; // Restrict logic to "none" or "youtube"
 }
 
 export default function SettingsPage() {
@@ -24,67 +29,67 @@ export default function SettingsPage() {
   const [selectedMode, setSelectedMode] = useState<FocusMode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState("system");
 
-  useEffect(() => { fetchModes(); }, []);
+  useEffect(() => {
+    fetchModes();
+    // Load local theme preference
+    const savedTheme = localStorage.getItem("theme-preference") || "system";
+    setCurrentTheme(savedTheme);
+  }, []);
 
   const fetchModes = async () => {
     try {
       const res = await api.get("/focus-modes");
       setModes(res.data);
       if (res.data.length > 0) setSelectedMode(res.data[0]);
-    } catch (err) { console.error("Load failed", err); }
-    finally { setIsLoading(false); }
+    } catch (err) {
+      console.error("Failed to load profiles", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  /**
+   * Generic handler for input changes within the selected profile.
+   */
   const handleFieldChange = (field: keyof FocusMode, value: any) => {
     if (!selectedMode) return;
     setSelectedMode({ ...selectedMode, [field]: value });
   };
-  
+
   const handleSave = async () => {
     if (!selectedMode) return;
     setIsSaving(true);
     try {
       await api.patch(`/focus-modes/${selectedMode.id}`, selectedMode);
-      setModes(modes.map(m => m.id === selectedMode.id ? selectedMode : m));
-      alert("Settings saved!");
-    } catch (err) { alert("Save failed."); }
-    finally { setIsSaving(false); }
+      setModes(modes.map((m) => (m.id === selectedMode.id ? selectedMode : m)));
+      alert("Settings saved successfully!");
+    } catch (err) {
+      alert("Failed to save settings.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddNew = async () => {
     try {
-      const res = await api.post("/focus-modes", { name: "New Profile",
-      workDuration: 25,
-      shortBreakDuration: 5,
-      longBreakDuration: 15,
-      musicType: "none",
-      musicUrl: "",
-      alertAt25Percent: true
-    });
+      const res = await api.post("/focus-modes", { name: "New Profile" });
       setModes((prev) => [...prev, res.data]);
-      setSelectedMode(res.data); 
-    } catch (err) { alert("Failed to add profile."); }
+      setSelectedMode(res.data);
+    } catch (err) {
+      alert("Error adding profile.");
+    }
   };
 
-  const handleDeleteSelected = async () => {
-    if (!selectedMode || modes.length <= 1) return;
-    if (!confirm(`Delete profile "${selectedMode.name}"?`)) return;
-    try {
-      await api.delete(`/focus-modes/${selectedMode.id}`);
-      const remaining = modes.filter((m) => m.id !== selectedMode.id);
-      setModes(remaining);
-      setSelectedMode(remaining[0] ?? null);
-    } catch (err) { alert("Delete failed."); }
-  };
-
-  if (isLoading) return <div className="p-8 text-center dark:text-white">Loading Profiles...</div>;
+  if (isLoading) return <div className="p-8 text-center dark:text-white font-bold">Loading Settings...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <Navbar />
       <div className="max-w-6xl mx-auto p-8 flex flex-col lg:flex-row gap-8">
-        {/* Sidebar */}
+        
+        {/* Sidebar: Profile List */}
         <div className="w-full lg:w-64 space-y-2">
           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Focus Profiles</h3>
           {modes.map((mode) => (
@@ -100,83 +105,97 @@ export default function SettingsPage() {
               {mode.name}
             </button>
           ))}
-          <button type="button" onClick={handleAddNew} className="w-full mt-4 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-gray-400 font-bold hover:text-blue-500 transition-all">
+          <button onClick={handleAddNew} className="w-full mt-4 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-gray-400 font-bold hover:text-blue-500 transition-all">
             + Add Profile
           </button>
         </div>
 
-        {/* Editor */}
+        {/* Main Editor: Profile Configuration */}
         {selectedMode && (
-          <div className="flex-grow bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-8">
+          <div className="flex-grow bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700 space-y-10">
             <div className="flex justify-between items-center">
-              <input type="text" value={selectedMode.name} onChange={(e) => handleFieldChange("name", e.target.value)} className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3" />
-              <div className="flex gap-3">
-                <button type="button" onClick={handleDeleteSelected} disabled={modes.length <= 1} className="px-4 py-2.5 rounded-xl font-bold border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50">Delete</button>
-                <button type="button" onClick={handleSave} disabled={isSaving} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg disabled:opacity-50">{isSaving ? "Saving..." : "Save Changes"}</button>
-              </div>
+              <input 
+                type="text" 
+                value={selectedMode.name} 
+                onChange={(e) => handleFieldChange("name", e.target.value)} 
+                className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3" 
+              />
+              <button 
+                onClick={handleSave} 
+                disabled={isSaving} 
+                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs tracking-widest hover:shadow-blue-500/20 disabled:opacity-50 transition-all"
+              >
+                {isSaving ? "SAVING..." : "SAVE CHANGES"}
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {/* Section 1: Timer & Alerts */}
+              {/* Section 1: Timer Logic */}
               <div className="space-y-6">
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Timer Settings</h4>
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Timer Durations (Min)</h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Work</label>
-                    <input type="number" value={selectedMode.workDuration} onChange={(e) => handleFieldChange("workDuration", parseInt(e.target.value))} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white" />
+                    <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Work</label>
+                    <input type="number" value={selectedMode.workDuration} onChange={(e) => handleFieldChange("workDuration", parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none" />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Short</label>
-                    <input type="number" value={selectedMode.shortBreakDuration} onChange={(e) => handleFieldChange("shortBreakDuration", parseInt(e.target.value))} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white" />
+                    <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Short</label>
+                    <input type="number" value={selectedMode.shortBreakDuration} onChange={(e) => handleFieldChange("shortBreakDuration", parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none" />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">Long</label>
-                    <input type="number" value={selectedMode.longBreakDuration} onChange={(e) => handleFieldChange("longBreakDuration", parseInt(e.target.value))} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white" />
+                    <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Long</label>
+                    <input type="number" value={selectedMode.longBreakDuration} onChange={(e) => handleFieldChange("longBreakDuration", parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none" />
                   </div>
                 </div>
-                <label className="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                  <input type="checkbox" checked={selectedMode.alertAt25Percent} onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)} className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Chime at 75%, 50%, 25%</span>
+                
+                <label className="flex items-center gap-4 cursor-pointer p-5 bg-gray-50 dark:bg-gray-900 rounded-2xl group transition-all">
+                  <input type="checkbox" checked={selectedMode.alertAt25Percent} onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)} className="w-5 h-5 rounded-md text-blue-600 border-none bg-gray-200 dark:bg-gray-700" />
+                  <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Progress Chimes (75%, 50%, 25%)</span>
                 </label>
               </div>
 
-              {/* Section 2: Audio & Music (FIXED ALARM HERE) */}
+              {/* Section 2: Sound & Music */}
               <div className="space-y-6">
-                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Audio & Music</h4>
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sound & Music</h4>
                 
-                {/* Fixed Alarm Selection */}
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Alarm Sound (Notification)</label>
-                  <select value={selectedMode.alarmSound} onChange={(e) => handleFieldChange("alarmSound", e.target.value)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white">
-                    <option value="classic">Classic Bell</option>
-                    <option value="digital">Digital Beep</option>
-                    <option value="bird">Morning Bird</option>
-                  </select>
+                  <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Background Music</label>
+                  <div className="space-y-3">
+                    {/* Simplified selection: Only None and YouTube */}
+                    <select 
+                      value={selectedMode.musicType} 
+                      onChange={(e) => handleFieldChange("musicType", e.target.value)} 
+                      className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none text-sm font-bold"
+                    >
+                      <option value="none">No Background Music</option>
+                      <option value="youtube">YouTube Video/Playlist</option>
+                    </select>
+                    
+                    {selectedMode.musicType === "youtube" && (
+                      <input 
+                        type="text" 
+                        placeholder="Paste YouTube Link here..." 
+                        value={selectedMode.musicUrl || ""} 
+                        onChange={(e) => handleFieldChange("musicUrl", e.target.value)} 
+                        className="w-full p-4 bg-blue-50/50 dark:bg-blue-900/20 border-2 border-blue-100 dark:border-blue-900/50 rounded-2xl text-sm dark:text-blue-400 placeholder:text-blue-300" 
+                      />
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Ambient Background Sound</label>
-                  <select value={selectedMode.ambientSound} onChange={(e) => handleFieldChange("ambientSound", e.target.value)} className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl dark:text-white">
-                    <option value="none">None</option>
-                    <option value="ticking">Classic Ticking</option>
-                    <option value="rain">Soft Rain</option>
-                    <option value="forest">Forest Ambience</option>
-                    <option value="cafe">London Cafe</option>
-                  </select>
-                </div>
-                {/* ★ Music Integration UI */}
-                <div className="p-4 border border-blue-100 dark:border-blue-900 rounded-2xl bg-blue-50/30 dark:bg-blue-900/10">
-                  <label className="text-xs font-bold text-blue-600 dark:text-blue-400 block mb-3 uppercase">External Music Link</label>
-                  <div className="space-y-3">
-                    <select value={selectedMode.musicType} onChange={(e) => handleFieldChange("musicType", e.target.value)} className="w-full p-2.5 bg-white dark:bg-gray-900 rounded-lg text-sm dark:text-white border-none shadow-sm">
-                      <option value="none">No Music</option>
-                      <option value="youtube">YouTube Embed</option>
-                      <option value="spotify">Spotify Embed</option>
-                      <option value="mp3">Direct MP3 URL</option>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Ambient Sound</label>
+                    <select value={selectedMode.ambientSound} onChange={(e) => handleFieldChange("ambientSound", e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none text-sm font-bold">
+                      <option value="none">None</option>
+                      <option value="ticking">Ticking</option>
+                      <option value="rain">Rain</option>
+                      <option value="forest">Forest</option>
                     </select>
-                    {selectedMode.musicType !== 'none' && (
-                      <input type="text" placeholder="Paste link here..." value={selectedMode.musicUrl || ''} onChange={(e) => handleFieldChange("musicUrl", e.target.value)} className="w-full p-2.5 bg-white dark:bg-gray-900 rounded-lg text-sm dark:text-white border-none shadow-sm placeholder:text-gray-400" />
-                    )}
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Volume</label>
+                    <input type="range" min="0" max="100" value={selectedMode.ambientVolume} onChange={(e) => handleFieldChange("ambientVolume", parseInt(e.target.value))} className="w-full mt-4" />
                   </div>
                 </div>
               </div>
