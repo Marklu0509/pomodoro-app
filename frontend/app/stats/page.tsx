@@ -1,197 +1,145 @@
-// frontend/app/settings/page.tsx
+// frontend/app/stats/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import api from "../../utils/api";
 import Navbar from "../components/Navbar";
+import HeatmapSection from "../components/HeatmapSection";
 
-/**
- * FocusMode Interface 
- * MUST be synchronized with your Prisma Schema and Timer component.
- */
-interface FocusMode {
-  id: number;
-  name: string;
-  workDuration: number;
-  shortBreakDuration: number;
-  longBreakDuration: number;
-  ambientVolume: number;
-  ambientSound: string;
-  alarmSound: string;
-  alertAt25Percent: boolean;
-  musicUrl: string | null;
-  musicType: string;
+interface WeeklyPoint {
+  date: string;
+  minutes: number;
 }
 
-export default function SettingsPage() {
-  const [modes, setModes] = useState<FocusMode[]>([]);
-  const [selectedMode, setSelectedMode] = useState<FocusMode | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+interface StatsResponse {
+  today: {
+    minutes: number;
+    goal: number;
+    progress: number;
+  };
+  weekly: WeeklyPoint[];
+}
 
-  // Initialize data on mount
+const WeeklyTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="glass-panel rounded-2xl px-4 py-2 text-xs text-slate-700 dark:text-slate-200">
+      <div className="font-semibold">{label}</div>
+      <div>{payload[0].value} mins</div>
+    </div>
+  );
+};
+
+export default function StatsPage() {
+  const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    fetchModes();
+    const loadStats = async () => {
+      try {
+        const res = await api.get("/stats");
+        setStats(res.data);
+      } catch (err) {
+        console.error("Failed to load stats", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
   }, []);
 
-  /**
-   * Fetches all focus profiles from the backend
-   */
-  const fetchModes = async () => {
-    try {
-      const res = await api.get("/focus-modes");
-      setModes(res.data);
-      if (res.data.length > 0) {
-        setSelectedMode(res.data[0]);
-      }
-    } catch (err) {
-      console.error("Failed to load modes", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const weeklyTotal = useMemo(() => stats?.weekly.reduce((sum, item) => sum + item.minutes, 0) || 0, [stats]);
+  const weeklyAverage = useMemo(() => (stats?.weekly.length ? Math.round(weeklyTotal / stats.weekly.length) : 0), [stats, weeklyTotal]);
+  const bestDay = useMemo(() => {
+    if (!stats?.weekly.length) return null;
+    return stats.weekly.reduce((best, point) => (point.minutes > best.minutes ? point : best), stats.weekly[0]);
+  }, [stats]);
 
-  /**
-   * Generic handler for updating local state fields
-   * @param field - Must be a valid key of the FocusMode interface
-   */
-  const handleFieldChange = (field: keyof FocusMode, value: any) => {
-    if (!selectedMode) return;
-    setSelectedMode({ ...selectedMode, [field]: value });
-  };
-
-  /**
-   * Persists changes to the backend
-   */
-  const handleSave = async () => {
-    if (!selectedMode) return;
-    setIsSaving(true);
-    try {
-      await api.patch(`/focus-modes/${selectedMode.id}`, selectedMode);
-      setModes(modes.map(m => m.id === selectedMode.id ? selectedMode : m));
-      alert("Settings saved successfully!");
-    } catch (err) {
-      alert("Failed to save settings.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddNew = async () => {
-    try {
-      const res = await api.post("/focus-modes", { name: "New Profile" });
-      setModes((prev) => [...prev, res.data]);
-      setSelectedMode(res.data);
-    } catch (err) {
-      alert("Failed to create profile.");
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedMode || modes.length <= 1) return;
-    if (!confirm("Delete this profile?")) return;
-    try {
-      await api.delete(`/focus-modes/${selectedMode.id}`);
-      const remaining = modes.filter(m => m.id !== selectedMode.id);
-      setModes(remaining);
-      setSelectedMode(remaining[0]);
-    } catch (err) {
-      alert("Delete failed.");
-    }
-  };
-
-  if (isLoading) return <div className="p-8 text-center dark:text-white">Loading Profiles...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-200">Loading stats...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-500">
+    <div className="min-h-screen transition-colors duration-500">
       <Navbar />
-      <div className="max-w-6xl mx-auto p-8 flex flex-col lg:flex-row gap-8">
-        
-        {/* Left Sidebar: List of Profiles */}
-        <div className="w-full lg:w-64 space-y-2">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Profiles</h3>
-          {modes.map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => setSelectedMode(mode)}
-              className={`w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition-all ${
-                selectedMode?.id === mode.id
-                  ? "bg-blue-600 text-white shadow-lg"
-                  : "text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800"
-              }`}
-            >
-              {mode.name}
-            </button>
-          ))}
-          <button onClick={handleAddNew} className="w-full mt-4 px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 font-bold text-sm hover:border-blue-500 hover:text-blue-500 transition-all">
-            + ADD NEW
-          </button>
-        </div>
-
-        {/* Right Editor: Detailed Settings */}
-        {selectedMode && (
-          <div className="flex-grow bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-10">
-              <input
-                type="text"
-                value={selectedMode.name}
-                onChange={(e) => handleFieldChange("name", e.target.value)}
-                className="text-2xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3"
-              />
-              <div className="flex gap-3">
-                <button onClick={handleDelete} disabled={modes.length <= 1} className="px-4 py-2.5 rounded-xl font-bold text-xs text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-30">DELETE</button>
-                <button onClick={handleSave} disabled={isSaving} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-black text-xs tracking-widest hover:shadow-lg disabled:opacity-50">
-                  {isSaving ? "SAVING..." : "SAVE CHANGES"}
-                </button>
+      <main className="max-w-6xl mx-auto p-8 space-y-8">
+        <header className="glass-card rounded-[2.5rem] p-8 md:p-10">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+            Focus Analytics
+          </p>
+          <h1 className="mt-4 text-3xl md:text-4xl font-display font-semibold text-slate-900 dark:text-white">
+            See how your focus compounds.
+          </h1>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-300">
+            Track today&apos;s progress, weekly trends, and the long arc of your deep work.
+          </p>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="glass-panel rounded-2xl p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500">Today</p>
+              <div className="mt-3 text-3xl font-display font-semibold text-slate-900 dark:text-white">
+                {stats?.today.minutes ?? 0}
+                <span className="text-sm font-body text-slate-500 dark:text-slate-400"> mins</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-400">
+                Goal: {stats?.today.goal ?? 0} mins
+              </p>
+              <div className="mt-4 h-2 rounded-full bg-white/60 dark:bg-white/10">
+                <div
+                  className="h-2 rounded-full bg-gradient-to-r from-cyan-400 to-amber-400"
+                  style={{ width: `${stats?.today.progress ?? 0}%` }}
+                />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {/* --- Timer Logic --- */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Intervals (Min)</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  {["workDuration", "shortBreakDuration", "longBreakDuration"].map((field) => (
-                    <div key={field}>
-                      <label className="text-[10px] text-gray-400 font-bold uppercase mb-1 block">{field.replace('Duration', '')}</label>
-                      <input
-                        type="number"
-                        value={selectedMode[field as keyof FocusMode] as number}
-                        onChange={(e) => handleFieldChange(field as keyof FocusMode, parseInt(e.target.value))}
-                        className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white font-bold"
-                      />
-                    </div>
-                  ))}
-                </div>
-                
-                <label className="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <input
-                    type="checkbox"
-                    checked={selectedMode.alertAt25Percent}
-                    onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-tight">Chime at 75%, 50%, 25%</span>
-                </label>
+            <div className="glass-panel rounded-2xl p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500">Weekly Total</p>
+              <div className="mt-3 text-3xl font-display font-semibold text-slate-900 dark:text-white">
+                {weeklyTotal}
+                <span className="text-sm font-body text-slate-500 dark:text-slate-400"> mins</span>
               </div>
-
-              {/* --- Audio Selection --- */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Audio Notification</h4>
-                <select
-                  value={selectedMode.alarmSound}
-                  onChange={(e) => handleFieldChange("alarmSound", e.target.value)}
-                  className="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border-none focus:ring-2 focus:ring-blue-500 dark:text-white font-bold text-sm"
-                >
-                  <option value="classic">Classic Bell</option>
-                  <option value="digital">Digital Beep</option>
-                  <option value="bird">Morning Bird</option>
-                </select>
+              <p className="mt-2 text-xs text-slate-400">Average {weeklyAverage} mins / day</p>
+            </div>
+            <div className="glass-panel rounded-2xl p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500">Best Day</p>
+              <div className="mt-3 text-3xl font-display font-semibold text-slate-900 dark:text-white">
+                {bestDay?.minutes ?? 0}
+                <span className="text-sm font-body text-slate-500 dark:text-slate-400"> mins</span>
               </div>
+              <p className="mt-2 text-xs text-slate-400">{bestDay?.date ?? "--"}</p>
             </div>
           </div>
-        )}
-      </div>
+        </header>
+
+        <section className="glass-card rounded-[2.5rem] p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-display font-semibold text-slate-900 dark:text-white">Weekly Flow</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-300">
+                Minutes focused across the last seven days.
+              </p>
+            </div>
+            <div className="glass-pill px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+              Last 7 Days
+            </div>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats?.weekly ?? []} barSize={28}>
+                <XAxis dataKey="date" stroke="rgba(148,163,184,0.6)" tickLine={false} axisLine={false} />
+                <YAxis stroke="rgba(148,163,184,0.6)" tickLine={false} axisLine={false} />
+                <Tooltip content={<WeeklyTooltip />} cursor={{ fill: "rgba(56,189,248,0.08)" }} />
+                <Bar dataKey="minutes" radius={[12, 12, 4, 4]} fill="url(#weeklyGradient)" />
+                <defs>
+                  <linearGradient id="weeklyGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#22d3ee" />
+                    <stop offset="100%" stopColor="#fbbf24" />
+                  </linearGradient>
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <HeatmapSection className="glass-card rounded-[2.5rem] p-8" />
+      </main>
     </div>
   );
 }

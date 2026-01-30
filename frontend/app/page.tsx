@@ -4,6 +4,7 @@
 import { useState } from "react";
 import api from "../utils/api";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "./components/ThemeToggle";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -60,102 +61,149 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden border border-gray-100 dark:border-gray-800">
-        
-        {/* --- tabs--- */}
-        <div className="flex border-b border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => { setIsLogin(true); setError(""); }}
-            className={`flex-1 py-4 text-center font-semibold transition-colors ${
-              isLogin 
-                ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600" 
-                : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setIsLogin(false); setError(""); }}
-            className={`flex-1 py-4 text-center font-semibold transition-colors ${
-              !isLogin 
-                ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600" 
-                : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="absolute inset-0">
+        <div className="absolute -top-24 left-[-10%] h-[420px] w-[420px] rounded-full bg-cyan-400/20 blur-[120px]" />
+        <div className="absolute top-10 right-[-10%] h-[380px] w-[380px] rounded-full bg-amber-400/20 blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[20%] h-[420px] w-[420px] rounded-full bg-emerald-400/20 blur-[130px]" />
+      </div>
 
-        <div className="p-8">
-          <h2 className="text-xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">
-            {isLogin ? "Welcome back" : "create a new account"}
-          </h2>
-          
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-300 text-sm p-3 rounded-md mb-4 text-center border border-red-100 dark:border-red-900">
-              {error}
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle />
+      </div>
+
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-16">
+        <div className="grid w-full gap-10 lg:grid-cols-[1.1fr_0.9fr] items-center">
+          <section className="space-y-8">
+            <div className="inline-flex items-center gap-2 glass-pill px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:text-slate-300">
+              Focus System
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              Glass Mode
             </div>
-          )}
+            <h1 className="text-4xl md:text-5xl font-display font-semibold leading-tight text-slate-900 dark:text-white">
+              Built for deep work, sculpted in glass.
+            </h1>
+            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-xl">
+              Manage tasks, launch focus sessions, and track momentum with a calm UI that keeps your
+              attention where it matters.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 text-sm text-slate-600 dark:text-slate-300">
+              {[
+                "Smart focus profiles + ambient control",
+                "Quick-start sessions for instant flow",
+                "Daily goal tracking with heatmap insights",
+                "Theme toggle built into every surface",
+              ].map((item) => (
+                <div key={item} className="glass-panel rounded-2xl p-4">
+                  <span className="font-semibold">{item}</span>
+                </div>
+              ))}
+            </div>
+          </section>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* only signup mode has name field */}
-            {!isLogin && (
+          <section className="glass-card rounded-[2.5rem] p-8 md:p-10">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">username</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="block w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-gray-100"
-                  placeholder="Your Name"
-                  suppressHydrationWarning
-                />
+                <h2 className="text-2xl font-display font-semibold text-slate-900 dark:text-white">
+                  {isLogin ? "Welcome back" : "Create your account"}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isLogin ? "Log in to continue your focus streak." : "Start a new focus ritual in minutes."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-2 glass-pill p-1">
+              <button
+                onClick={() => { setIsLogin(true); setError(""); }}
+                className={`flex-1 rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition-all ${
+                  isLogin
+                    ? "bg-white/90 dark:bg-white/15 text-slate-900 dark:text-white shadow-md"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setIsLogin(false); setError(""); }}
+                className={`flex-1 rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition-all ${
+                  !isLogin
+                    ? "bg-white/90 dark:bg-white/15 text-slate-900 dark:text-white shadow-md"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            {error && (
+              <div className="mt-5 rounded-2xl border border-rose-200/60 dark:border-rose-500/30 bg-rose-50/70 dark:bg-rose-950/40 p-3 text-sm text-rose-600 dark:text-rose-200">
+                {error}
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-gray-100"
-                placeholder="name@example.com"
-                required
-                suppressHydrationWarning
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              {!isLogin && (
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="glass-input w-full rounded-2xl px-4 py-3 text-sm"
+                    placeholder="Your Name"
+                    suppressHydrationWarning
+                  />
+                </div>
+              )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full p-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-gray-100"
-                placeholder="••••••••"
-                required
-                suppressHydrationWarning
-              />
-            </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="glass-input w-full rounded-2xl px-4 py-3 text-sm"
+                  placeholder="name@example.com"
+                  required
+                  suppressHydrationWarning
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-3 px-4 text-white font-semibold rounded-md transition duration-200 mt-4 ${
-                isLoading ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500"
-              }`}
-            >
-              {isLoading 
-                ? "Processing" 
-                : (isLogin ? "log in " : "Sign up and Log in")
-              }
-            </button>
-          </form>
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="glass-input w-full rounded-2xl px-4 py-3 text-sm"
+                  placeholder="••••••••"
+                  required
+                  suppressHydrationWarning
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full rounded-2xl px-4 py-4 text-xs font-semibold uppercase tracking-[0.25em] text-white transition-all ${
+                  isLoading
+                    ? "bg-slate-400/60 cursor-not-allowed"
+                    : "bg-gradient-to-r from-cyan-500 via-sky-500 to-amber-400 hover:brightness-110 shadow-lg shadow-cyan-500/30"
+                }`}
+              >
+                {isLoading ? "Processing" : (isLogin ? "Log In" : "Sign Up & Enter")}
+              </button>
+            </form>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

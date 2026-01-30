@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "../../utils/api";
 import Timer from "../components/Timer";
+import ThemeToggle from "../components/ThemeToggle";
 
 function FocusContent() {
   const router = useRouter();
@@ -43,7 +44,10 @@ function FocusContent() {
 
   return (
     // ★ Page Layout: Centered card, no external header
-    <div className={`min-h-screen flex flex-col items-center justify-center transition-all ${isMini ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-950 p-8'}`}>
+    <div className={`relative min-h-screen flex flex-col items-center justify-center transition-all ${isMini ? "p-4" : "p-8"}`}>
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle compact />
+      </div>
       <div className="w-full max-w-md">
         <Timer 
           key={activeMode.id}

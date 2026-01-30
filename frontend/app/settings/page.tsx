@@ -84,49 +84,49 @@ export default function SettingsPage() {
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center dark:text-white font-bold animate-pulse">Initializing...</div>;
+  if (isLoading) return <div className="p-8 text-center text-slate-500 dark:text-slate-200 font-semibold animate-pulse">Initializing...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-500">
+    <div className="min-h-screen transition-colors duration-500">
       <Navbar />
       
       <div className="max-w-6xl mx-auto p-8 flex flex-col lg:flex-row gap-8">
         
         {/* Sidebar: Profile Selection List */}
         <div className="w-full lg:w-64 space-y-2">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-2">Focus Profiles</h3>
+          <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.3em] mb-4 ml-2">Focus Profiles</h3>
           {modes.map((mode) => (
             <button
               key={mode.id}
               onClick={() => setSelectedMode(mode)}
-              className={`w-full text-left px-5 py-4 rounded-2xl font-bold transition-all ${
+              className={`w-full text-left px-5 py-4 rounded-2xl font-semibold transition-all ${
                 selectedMode?.id === mode.id
-                  ? "bg-blue-600 text-white shadow-xl scale-[1.02]"
-                  : "text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800"
+                  ? "bg-cyan-500 text-white shadow-xl shadow-cyan-500/30 scale-[1.02]"
+                  : "glass-panel text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               {mode.name}
             </button>
           ))}
-          <button onClick={handleAddNew} className="w-full mt-4 px-5 py-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-gray-400 font-bold hover:text-blue-500 hover:border-blue-500 transition-all">
+          <button onClick={handleAddNew} className="w-full mt-4 px-5 py-4 rounded-2xl border-2 border-dashed border-white/60 dark:border-white/10 text-slate-400 font-semibold hover:text-cyan-400 hover:border-cyan-400 transition-all">
             + New Profile
           </button>
         </div>
 
         {/* Main Editor: Configuration Form */}
         {selectedMode && (
-          <div className="flex-grow bg-white dark:bg-gray-800 rounded-[3rem] p-10 shadow-sm border border-gray-100 dark:border-gray-700 space-y-10">
-            <div className="flex justify-between items-center pb-6 border-b border-gray-50 dark:border-gray-700">
+          <div className="flex-grow glass-card rounded-[3rem] p-10 space-y-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 glass-divider">
               <input 
                 type="text" 
                 value={selectedMode.name} 
                 onChange={(e) => handleFieldChange("name", e.target.value)} 
-                className="text-3xl font-black bg-transparent border-none focus:ring-0 dark:text-white w-2/3 tracking-tighter" 
+                className="text-3xl font-display font-semibold bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white w-full md:w-2/3 tracking-tight" 
               />
               <button 
                 onClick={handleSave} 
                 disabled={isSaving} 
-                className="bg-gray-900 dark:bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-xs tracking-[0.15em] hover:opacity-90 disabled:opacity-50 transition-all shadow-lg"
+                className="bg-gradient-to-r from-cyan-500 via-sky-500 to-amber-400 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-cyan-500/30"
               >
                 {isSaving ? "SAVING..." : "SAVE CHANGES"}
               </button>
@@ -136,7 +136,7 @@ export default function SettingsPage() {
               
               {/* Left Column: Timer & Notification Logic */}
               <div className="space-y-8">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Timer & Alerts</h4>
+                <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.3em]">Timer & Alerts</h4>
                 
                 {/* Duration Inputs */}
                 <div className="grid grid-cols-3 gap-4">
@@ -146,12 +146,12 @@ export default function SettingsPage() {
                     { label: 'Long', key: 'longBreakDuration' }
                   ].map((item) => (
                     <div key={item.key}>
-                      <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">{item.label}</label>
+                      <label className="text-[10px] font-semibold text-slate-500 block mb-2 uppercase">{item.label}</label>
                       <input 
                         type="number" 
                         value={selectedMode[item.key as keyof FocusMode] as number} 
                         onChange={(e) => handleFieldChange(item.key as keyof FocusMode, parseInt(e.target.value))} 
-                        className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none font-bold" 
+                        className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-semibold" 
                       />
                     </div>
                   ))}
@@ -159,11 +159,11 @@ export default function SettingsPage() {
 
                 {/* Alarm Sound Picker - Restored */}
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 block mb-2 uppercase">End of Session Alarm</label>
+                  <label className="text-[10px] font-semibold text-slate-500 block mb-2 uppercase">End of Session Alarm</label>
                   <select 
                     value={selectedMode.alarmSound} 
                     onChange={(e) => handleFieldChange("alarmSound", e.target.value)} 
-                    className="w-full p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl dark:text-white border-none text-sm font-bold cursor-pointer"
+                    className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-semibold cursor-pointer"
                   >
                     <option value="classic">Classic Bell</option>
                     <option value="digital">Digital Beep</option>
@@ -171,28 +171,28 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 
-                <label className="flex items-center gap-4 cursor-pointer p-5 bg-gray-50 dark:bg-gray-900 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-900/50 transition-all">
+                <label className="flex items-center gap-4 cursor-pointer p-5 glass-panel rounded-2xl hover:brightness-110 transition-all">
                   <input 
                     type="checkbox" 
                     checked={selectedMode.alertAt25Percent} 
                     onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)} 
-                    className="w-6 h-6 rounded-lg text-blue-600 border-none bg-gray-200 dark:bg-gray-700 focus:ring-0" 
+                    className="w-6 h-6 rounded-lg text-cyan-500 border-none bg-white/60 dark:bg-white/10 focus:ring-0" 
                   />
-                  <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Milestone Chimes (75%, 50%, 25%)</span>
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Milestone Chimes (75%, 50%, 25%)</span>
                 </label>
               </div>
 
               {/* Right Column: Audio & Music Customization */}
               <div className="space-y-8">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Audio & Background</h4>
+                <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.3em]">Audio & Background</h4>
                 
                 {/* Background Music Card */}
-                <div className="p-6 border border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-900/10 rounded-[2rem] space-y-5">
-                  <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 block uppercase tracking-widest">YouTube Music Integration</label>
+                <div className="p-6 border border-cyan-200/60 dark:border-cyan-500/20 bg-cyan-50/40 dark:bg-cyan-950/20 rounded-[2rem] space-y-5">
+                  <label className="text-[10px] font-semibold text-cyan-500 dark:text-cyan-300 block uppercase tracking-widest">YouTube Music Integration</label>
                   <select 
                     value={selectedMode.musicType} 
                     onChange={(e) => handleFieldChange("musicType", e.target.value)} 
-                    className="w-full p-4 bg-white dark:bg-gray-900 rounded-2xl dark:text-white border-none text-sm font-bold shadow-sm"
+                    className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-semibold shadow-sm"
                   >
                     <option value="none">No Music</option>
                     <option value="youtube">YouTube URL</option>
@@ -205,11 +205,11 @@ export default function SettingsPage() {
                         placeholder="Paste YouTube Link (Video or Playlist)..." 
                         value={selectedMode.musicUrl || ""} 
                         onChange={(e) => handleFieldChange("musicUrl", e.target.value)} 
-                        className="w-full p-4 bg-white dark:bg-gray-900 rounded-2xl text-sm border-none shadow-sm placeholder:text-gray-300 dark:text-blue-400 font-medium"
+                        className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-medium shadow-sm"
                       />
                       {/* Music Volume Control */}
                       <div className="px-1">
-                        <div className="flex justify-between text-[10px] font-black text-blue-500 uppercase mb-2">
+                        <div className="flex justify-between text-[10px] font-semibold text-cyan-500 uppercase mb-2">
                           <span>Music Volume</span>
                           <span>{selectedMode.musicVolume}%</span>
                         </div>
@@ -217,7 +217,7 @@ export default function SettingsPage() {
                           type="range" min="0" max="100" 
                           value={selectedMode.musicVolume} 
                           onChange={(e) => handleFieldChange("musicVolume", parseInt(e.target.value))} 
-                          className="w-full h-1.5 bg-blue-100 dark:bg-blue-900 rounded-lg appearance-none cursor-pointer accent-blue-600" 
+                          className="w-full h-1.5 bg-cyan-100 dark:bg-cyan-900 rounded-lg appearance-none cursor-pointer accent-cyan-500" 
                         />
                       </div>
                     </div>
@@ -227,16 +227,16 @@ export default function SettingsPage() {
                 {/* Ambient Sounds Grid */}
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 block mb-3 uppercase">Ambient Environment</label>
+                    <label className="text-[10px] font-semibold text-slate-500 block mb-3 uppercase">Ambient Environment</label>
                     <div className="flex gap-3 flex-wrap">
                       {['none', 'ticking', 'rain', 'forest'].map((sound) => (
                         <button
                           key={sound}
                           onClick={() => handleFieldChange("ambientSound", sound)}
-                          className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                          className={`px-4 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
                             selectedMode.ambientSound === sound
-                              ? "bg-gray-800 text-white dark:bg-white dark:text-gray-900"
-                              : "bg-gray-100 dark:bg-gray-900 text-gray-400"
+                              ? "bg-slate-900 text-white dark:bg-white/15 dark:text-white"
+                              : "glass-pill text-slate-400 dark:text-slate-300"
                           }`}
                         >
                           {sound}
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase mb-2">
+                    <div className="flex justify-between text-[10px] font-semibold text-slate-500 uppercase mb-2">
                       <span>Ambient Volume</span>
                       <span>{selectedMode.ambientVolume}%</span>
                     </div>
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                       type="range" min="0" max="100" 
                       value={selectedMode.ambientVolume} 
                       onChange={(e) => handleFieldChange("ambientVolume", parseInt(e.target.value))} 
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-gray-500" 
+                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-slate-500" 
                     />
                   </div>
                 </div>

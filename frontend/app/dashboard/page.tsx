@@ -118,103 +118,128 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen transition-colors duration-300">
       <Navbar />
       
-      <main className="max-w-4xl mx-auto p-8">
-        
-        {/* Profile Selector Section */}
-        <section className="flex flex-col items-center mb-10">
-          <div className="flex bg-gray-200/50 dark:bg-gray-800/50 p-1.5 rounded-2xl backdrop-blur-md">
-            {focusModes.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                onClick={() => setActiveMode(mode)}
-                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  activeMode?.id === mode.id
-                    ? "bg-white dark:bg-gray-700 text-blue-600 shadow-md scale-105"
-                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                }`}
-              >
-                {mode.name}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Dashboard Header: Title and Bulk Actions */}
-        <header className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-3xl font-black text-gray-800 dark:text-gray-100 tracking-tighter">Tasks</h1>
+      <main className="max-w-6xl mx-auto p-8">
+        <header className="grid gap-6 md:grid-cols-[1.3fr_0.7fr] mb-10">
+          <div className="glass-card rounded-[2.5rem] p-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+              Focus Dashboard
+            </p>
+            <h1 className="mt-4 text-3xl md:text-4xl font-display font-semibold text-slate-900 dark:text-white">
+              Today feels intentional.
+            </h1>
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-300 max-w-lg">
+              Pick a focus profile, launch a session, and keep your task list streamlined.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {focusModes.map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setActiveMode(mode)}
+                  className={`rounded-2xl px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
+                    activeMode?.id === mode.id
+                      ? "bg-cyan-500/90 text-white shadow-lg shadow-cyan-500/30"
+                      : "glass-pill text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {mode.name}
+                </button>
+              ))}
+            </div>
             {tasks.length > 0 && (
-              <button 
+              <button
                 onClick={handleDeleteAll}
-                className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest mt-2 transition-colors"
+                className="mt-6 text-[10px] font-semibold text-rose-400 hover:text-rose-300 uppercase tracking-[0.25em] transition-colors"
               >
-                × Clear All Tasks
+                Clear All Tasks
               </button>
             )}
           </div>
-          <button 
-            onClick={() => startFocusSession(null)} 
-            className="px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-xs tracking-widest shadow-xl hover:shadow-blue-500/40 hover:-translate-y-1 transition-all"
-          >
-            ⚡ QUICK START
-          </button>
+
+          <div className="glass-card rounded-[2.5rem] p-8 flex flex-col justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                Active Mode
+              </p>
+              <h2 className="mt-4 text-2xl font-display font-semibold text-slate-900 dark:text-white">
+                {activeMode?.name || "Loading..."}
+              </h2>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
+                {activeMode
+                  ? `${activeMode.workDuration} min focus · ${activeMode.shortBreakDuration} min break`
+                  : "Select a focus profile to begin."}
+              </p>
+            </div>
+            <button
+              onClick={() => startFocusSession(null)}
+              className="mt-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-amber-400 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-cyan-500/30 hover:brightness-110"
+            >
+              Quick Start Session
+            </button>
+          </div>
         </header>
 
-        {/* Task Creation Form */}
-        <section className="bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 mb-10">
-          <form onSubmit={handleCreateTask} className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-grow w-full">
-              <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Task Title</label>
-              <input 
-                type="text" 
-                value={newTaskTitle} 
-                onChange={(e) => setNewTaskTitle(e.target.value)} 
-                className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-gray-900 dark:text-blue-400 placeholder-gray-500 dark:placeholder-blue-400 focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="What are you working on?"
+        <section className="glass-card rounded-[2.5rem] p-6 md:p-8 mb-10">
+          <form onSubmit={handleCreateTask} className="grid gap-4 md:grid-cols-[1fr_140px_auto] items-end">
+            <div className="w-full">
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-[0.25em] mb-2 ml-1">
+                Task Title
+              </label>
+              <input
+                type="text"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                className="glass-input w-full rounded-2xl px-4 py-4 text-sm"
+                placeholder="What needs your attention?"
               />
             </div>
-            <div className="w-full md:w-28">
-              <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">Est. 🍅</label>
-              <input 
-                type="number" 
+            <div className="w-full">
+              <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-[0.25em] mb-2 ml-1">
+                Est. 🍅
+              </label>
+              <input
+                type="number"
                 min="1"
-                value={newTaskEstimate} 
+                value={newTaskEstimate}
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   setNewTaskEstimate(Number.isFinite(next) && next > 0 ? next : 1);
-                }} 
-                className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl text-gray-900 dark:text-blue-400"
+                }}
+                className="glass-input w-full rounded-2xl px-4 py-4 text-sm"
               />
             </div>
-            <button type="submit" className="w-full md:w-auto bg-gray-800 dark:bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-xs tracking-widest hover:opacity-90">
-              ADD
+            <button
+              type="submit"
+              className="rounded-2xl bg-slate-900/90 dark:bg-white/15 px-8 py-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-white shadow-lg hover:brightness-110"
+            >
+              Add Task
             </button>
           </form>
         </section>
 
-        {/* Task List Grid */}
         <section className="grid gap-4 pb-20">
           {isLoading ? (
-            <div className="text-center py-10 text-gray-400 font-bold">Loading...</div>
+            <div className="glass-panel rounded-[2rem] py-10 text-center text-slate-500 dark:text-slate-300 font-semibold">
+              Loading tasks...
+            </div>
           ) : tasks.length === 0 ? (
-            <div className="text-center py-20 bg-gray-100/50 dark:bg-gray-800/30 rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-gray-700 text-gray-400 italic">
+            <div className="glass-panel rounded-[2.5rem] border-2 border-dashed border-white/50 dark:border-white/10 py-20 text-center text-slate-500 dark:text-slate-400 italic">
               Your list is empty. Add a task to begin.
             </div>
           ) : (
             tasks.map((task) => (
               <div 
                 key={task.id} 
-                className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 flex justify-between items-center group hover:border-blue-300 dark:hover:border-blue-500/50 transition-all shadow-sm"
+                className="glass-panel rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-[0_20px_50px_rgba(14,116,144,0.18)]"
               >
                 <div className="flex-grow">
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h3 className="text-xl font-display font-semibold text-slate-900 dark:text-white transition-colors">
                     {task.title}
                   </h3>
-                  <p className="text-sm font-bold text-gray-400 mt-1">
+                  <p className="text-sm font-semibold text-slate-400 mt-2">
                     {task.completedPomodoros} / {task.estimatedPomodoros} 🍅
                   </p>
                 </div>
@@ -223,7 +248,7 @@ export default function DashboardPage() {
                   {/* Individual Delete Button - Hidden by default, visible on hover */}
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                    className="p-3 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
                     title="Delete Task"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -234,7 +259,7 @@ export default function DashboardPage() {
                   {/* Focus Start Button */}
                   <button 
                     onClick={() => startFocusSession(task.id)} 
-                    className="px-8 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                    className="px-6 py-3 rounded-xl bg-cyan-500/90 text-white font-semibold text-[10px] uppercase tracking-[0.25em] hover:brightness-110 transition-all shadow-lg shadow-cyan-500/30"
                   >
                     START
                   </button>

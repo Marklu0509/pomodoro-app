@@ -1,11 +1,10 @@
 // frontend/app/layout.tsx
 import type { Metadata } from "next";
-// 1. Remove "next/font/local" and import "next/font/google" instead
-import { Inter } from "next/font/google"; 
+import { DM_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-// 2. Configure the Google Font (Inter)
-const inter = Inter({ subsets: ["latin"] });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-body" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-display" });
 
 export const metadata: Metadata = {
   title: "Pomodoro Focus",
@@ -36,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           } catch (e) {}
         `}} />
       </head>
-      <body className={inter.className}>
+      <body className={`${dmSans.variable} ${spaceGrotesk.variable} antialiased`}>
         {children}
       </body>
     </html>

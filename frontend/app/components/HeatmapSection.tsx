@@ -23,7 +23,11 @@ interface HeatmapData {
   count: number; // minutes
 }
 
-export default function HeatmapSection() {
+interface HeatmapSectionProps {
+  className?: string;
+}
+
+export default function HeatmapSection({ className = "" }: HeatmapSectionProps) {
   const [data, setData] = useState<HeatmapData[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -50,11 +54,11 @@ export default function HeatmapSection() {
 
   // Helper: Get color scale based on minutes focused
   const getColorClass = (minutes: number) => {
-    if (minutes === 0) return "bg-gray-100 dark:bg-gray-800";
-    if (minutes < 30) return "bg-green-200 dark:bg-green-900/40";
-    if (minutes < 60) return "bg-green-400 dark:bg-green-800/60";
-    if (minutes < 120) return "bg-green-600 dark:bg-green-700/70";
-    return "bg-green-800 dark:bg-green-600"; // Deep green for heavy focus
+    if (minutes === 0) return "bg-white/60 dark:bg-white/5";
+    if (minutes < 30) return "bg-cyan-200/70 dark:bg-cyan-900/40";
+    if (minutes < 60) return "bg-cyan-400/70 dark:bg-cyan-700/60";
+    if (minutes < 120) return "bg-emerald-400/70 dark:bg-emerald-700/70";
+    return "bg-amber-400/80 dark:bg-amber-500/80";
   };
 
   // Helper: Find data for a specific date
@@ -98,13 +102,13 @@ export default function HeatmapSection() {
           />
         </div>
         {/* Legend */}
-        <div className="flex items-center justify-end gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
+        <div className="flex items-center justify-end gap-2 text-xs text-slate-500 dark:text-slate-400 mt-2">
           <span>Less</span>
-          <div className="w-3 h-3 bg-[#ebedf0]"></div>
-          <div className="w-3 h-3 bg-[#c6e48b]"></div>
-          <div className="w-3 h-3 bg-[#7bc96f]"></div>
-          <div className="w-3 h-3 bg-[#239a3b]"></div>
-          <div className="w-3 h-3 bg-[#196127]"></div>
+          <div className="w-3 h-3 bg-cyan-100"></div>
+          <div className="w-3 h-3 bg-cyan-300"></div>
+          <div className="w-3 h-3 bg-cyan-500"></div>
+          <div className="w-3 h-3 bg-emerald-500"></div>
+          <div className="w-3 h-3 bg-amber-400"></div>
           <span>More</span>
         </div>
       </div>
@@ -129,18 +133,18 @@ export default function HeatmapSection() {
       <div>
         {/* Month Navigation */}
         <div className="flex justify-between items-center mb-4">
-          <button 
-             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+          <button
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            className="p-2 rounded-full glass-pill hover:brightness-110"
           >
             ←
           </button>
-          <h3 className="font-bold text-lg text-gray-700 dark:text-gray-200">
+          <h3 className="font-semibold text-lg text-slate-700 dark:text-slate-200">
             {format(currentMonth, "MMMM yyyy")}
           </h3>
-          <button 
-             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+          <button
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            className="p-2 rounded-full glass-pill hover:brightness-110"
           >
             →
           </button>
@@ -150,7 +154,7 @@ export default function HeatmapSection() {
         <div className="grid grid-cols-7 gap-2">
           {/* Weekday Labels */}
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-            <div key={d} className="text-center text-xs font-semibold text-gray-400 dark:text-gray-500 py-1">
+            <div key={d} className="text-center text-xs font-semibold text-slate-400 dark:text-slate-500 py-1">
               {d}
             </div>
           ))}
@@ -169,19 +173,19 @@ export default function HeatmapSection() {
               <div 
                 key={day.toString()}
                 className={`
-                  h-10 md:h-14 rounded-md border border-gray-50 dark:border-gray-800 flex flex-col items-center justify-center relative group
+                  h-10 md:h-14 rounded-md border border-white/50 dark:border-white/10 flex flex-col items-center justify-center relative group
                   ${getColorClass(minutes)}
-                  ${isToday ? "ring-2 ring-blue-500" : ""}
+                  ${isToday ? "ring-2 ring-cyan-400" : ""}
                 `}
                 title={`${format(day, "yyyy-MM-dd")}: ${minutes} mins`}
               >
-                <span className={`text-xs ${minutes > 60 ? 'text-white' : 'text-gray-600 dark:text-gray-300'} font-medium z-10`}>
+                <span className={`text-xs ${minutes > 60 ? 'text-white' : 'text-slate-600 dark:text-slate-300'} font-medium z-10`}>
                   {format(day, "d")}
                 </span>
                 
                 {/* Tooltip on Hover */}
                 {minutes > 0 && (
-                  <div className="absolute -top-8 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  <div className="absolute -top-8 glass-panel text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                     {minutes} mins
                   </div>
                 )}
@@ -193,27 +197,30 @@ export default function HeatmapSection() {
     );
   };
 
-  if (loading) return <div className="p-4 text-center text-gray-400 dark:text-gray-500">Loading heatmap...</div>;
+  if (loading) return <div className="p-4 text-center text-slate-500 dark:text-slate-400">Loading heatmap...</div>;
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 mb-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Focus History</h2>
+    <div className={className ? className : "glass-card rounded-2xl p-6"}>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <div>
+          <h2 className="text-xl font-display font-semibold text-slate-900 dark:text-white">Focus History</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-300">Daily intensity across the year.</p>
+        </div>
         
         {/* Toggle Buttons */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <div className="flex glass-pill p-1 rounded-lg">
           <button
             onClick={() => setViewMode("MONTH")}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-              viewMode === "MONTH" ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-all ${
+              viewMode === "MONTH" ? "bg-white/90 dark:bg-white/15 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             Monthly
           </button>
           <button
             onClick={() => setViewMode("YEAR")}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-              viewMode === "YEAR" ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-all ${
+              viewMode === "YEAR" ? "bg-white/90 dark:bg-white/15 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             Yearly
@@ -225,19 +232,19 @@ export default function HeatmapSection() {
 
       {/* Styles for Year View (react-calendar-heatmap override) */}
       <style jsx global>{`
-        .react-calendar-heatmap text { font-size: 10px; fill: #9ca3af; }
-        .react-calendar-heatmap .color-empty { fill: #ebedf0; }
-        .react-calendar-heatmap .color-scale-1 { fill: #c6e48b; }
-        .react-calendar-heatmap .color-scale-2 { fill: #7bc96f; }
-        .react-calendar-heatmap .color-scale-3 { fill: #239a3b; }
-        .react-calendar-heatmap .color-scale-4 { fill: #196127; }
-        .dark .react-calendar-heatmap text { fill: #6b7280; }
-        .dark .react-calendar-heatmap .color-empty { fill: #1f2937; }
-        .dark .react-calendar-heatmap .color-scale-1 { fill: #14532d; }
-        .dark .react-calendar-heatmap .color-scale-2 { fill: #166534; }
-        .dark .react-calendar-heatmap .color-scale-3 { fill: #15803d; }
-        .dark .react-calendar-heatmap .color-scale-4 { fill: #22c55e; }
-        .react-calendar-heatmap rect:hover { stroke: #555; stroke-width: 1px; }
+        .react-calendar-heatmap text { font-size: 10px; fill: #94a3b8; }
+        .react-calendar-heatmap .color-empty { fill: rgba(148, 163, 184, 0.15); }
+        .react-calendar-heatmap .color-scale-1 { fill: #67e8f9; }
+        .react-calendar-heatmap .color-scale-2 { fill: #22d3ee; }
+        .react-calendar-heatmap .color-scale-3 { fill: #34d399; }
+        .react-calendar-heatmap .color-scale-4 { fill: #fbbf24; }
+        .dark .react-calendar-heatmap text { fill: #64748b; }
+        .dark .react-calendar-heatmap .color-empty { fill: rgba(148, 163, 184, 0.12); }
+        .dark .react-calendar-heatmap .color-scale-1 { fill: #0e7490; }
+        .dark .react-calendar-heatmap .color-scale-2 { fill: #0891b2; }
+        .dark .react-calendar-heatmap .color-scale-3 { fill: #047857; }
+        .dark .react-calendar-heatmap .color-scale-4 { fill: #f59e0b; }
+        .react-calendar-heatmap rect:hover { stroke: rgba(148,163,184,0.6); stroke-width: 1px; }
       `}</style>
     </div>
   );

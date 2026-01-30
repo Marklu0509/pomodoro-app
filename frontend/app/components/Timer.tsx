@@ -126,26 +126,26 @@ export default function Timer({
     return `https://www.youtube.com/embed/${vid}?autoplay=1&controls=0&loop=1&playlist=${vid}`;
   };
 
-  const currentColor = status === "WORK" ? "#ef4444" : "#3b82f6";
+  const currentColor = status === "WORK" ? "#22d3ee" : "#f59e0b";
 
   return (
-    <div className="p-8 bg-white dark:bg-gray-800 rounded-[3rem] border border-gray-100 dark:border-gray-700 shadow-2xl flex flex-col items-center relative transition-all duration-500">
+    <div className="glass-card p-8 rounded-[3rem] flex flex-col items-center relative transition-all duration-500 overflow-hidden">
       
       {showControls && (
         <div className="w-full flex justify-between items-center mb-8 px-2">
-          <button onClick={onExit} className="p-2.5 text-gray-300 hover:text-red-500 transition-colors bg-gray-50 dark:bg-gray-900 rounded-xl">
+          <button onClick={onExit} className="p-2.5 text-slate-400 hover:text-rose-400 transition-colors glass-pill rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
           </button>
 
-          <div className="flex bg-gray-100 dark:bg-gray-900 p-1.5 rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex glass-pill p-1.5 rounded-2xl">
             {modes?.map((m) => (
               <button
                 key={m.id}
                 onClick={() => onModeChange?.(m)}
-                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${
-                  activeMode.id === m.id ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm" : "text-gray-400"
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-semibold uppercase tracking-[0.2em] transition-all ${
+                  activeMode.id === m.id ? "bg-white/90 dark:bg-white/15 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 {m.name}
@@ -153,7 +153,7 @@ export default function Timer({
             ))}
           </div>
 
-          <button onClick={onPopOut} className="p-2.5 text-gray-300 hover:text-blue-500 transition-colors bg-gray-50 dark:bg-gray-900 rounded-xl">
+          <button onClick={onPopOut} className="p-2.5 text-slate-400 hover:text-cyan-400 transition-colors glass-pill rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
             </svg>
@@ -172,13 +172,13 @@ export default function Timer({
         </div>
       )}
 
-      <div className="text-[11px] font-black tracking-[0.2em] text-gray-400 dark:text-gray-500 uppercase mb-4 px-6 text-center line-clamp-2">
+      <div className="glass-pill px-6 py-2 text-[10px] font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-300 uppercase mb-6 text-center line-clamp-2">
         {taskName} <span className="mx-2 opacity-30">/</span> {status}
       </div>
 
       <div className="relative w-64 h-64 mb-10">
         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="4" className="dark:stroke-gray-800" />
+          <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(148,163,184,0.35)" strokeWidth="4" className="dark:stroke-slate-800/80" />
           <circle
             cx="50" cy="50" r="45" fill="none" stroke={currentColor} strokeWidth="5" strokeLinecap="round"
             style={{
@@ -189,7 +189,7 @@ export default function Timer({
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-6xl font-mono font-bold text-gray-800 dark:text-gray-100 tracking-tighter">
+          <span className="text-6xl font-mono font-bold text-slate-900 dark:text-white tracking-tight">
             {Math.floor(timeLeft / 60).toString().padStart(2, "0")}:{(timeLeft % 60).toString().padStart(2, "0")}
           </span>
         </div>
@@ -202,20 +202,20 @@ export default function Timer({
             if (isActive) stopAudio(ambientAudioRef.current);
             else if (status === "WORK" && activeMode.ambientSound !== "ticking") ambientAudioRef.current?.play().catch(() => {});
           }}
-          className="flex-1 py-5 rounded-[1.5rem] font-black text-xs tracking-widest text-white shadow-xl active:scale-95 transition-all"
+          className="flex-1 py-5 rounded-[1.5rem] font-semibold text-xs tracking-[0.25em] text-white shadow-xl active:scale-95 transition-all"
           style={{ backgroundColor: isActive ? "#f59e0b" : currentColor }}
         >
           {isActive ? "PAUSE" : "START"}
         </button>
         <button
           onClick={() => { setIsActive(false); stopAudio(ambientAudioRef.current); setTimeLeft(activeMode.workDuration * 60); }}
-          className="px-8 py-5 rounded-[1.5rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-black text-xs active:scale-95 transition-all"
+          className="px-8 py-5 rounded-[1.5rem] glass-pill text-slate-500 dark:text-slate-300 font-semibold text-xs active:scale-95 transition-all"
         >
           RESET
         </button>
       </div>
       
-      <button onClick={() => setTimeLeft(2)} className="mt-8 text-[10px] font-bold text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors">
+      <button onClick={() => setTimeLeft(2)} className="mt-8 text-[10px] font-semibold text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors">
         Quick Test (2s)
       </button>
     </div>
