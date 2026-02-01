@@ -193,7 +193,7 @@ export default function AuthPage() {
                 className={`w-full rounded-2xl px-4 py-4 text-xs font-semibold uppercase tracking-[0.25em] text-white transition-all ${
                   isLoading
                     ? "bg-slate-400/60 cursor-not-allowed"
-                    : "bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
+                    : "bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
                 }`}
               >
                 {isLoading ? "Processing" : (isLogin ? "Log In" : "Sign Up & Enter")}

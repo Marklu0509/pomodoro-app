@@ -84,7 +84,7 @@ export default function StatsPage() {
               </p>
               <div className="mt-4 h-2 rounded-full bg-white/60 dark:bg-white/10">
                 <div
-                  className="h-2 rounded-full bg-slate-900"
+                  className="h-2 rounded-full bg-slate-900 dark:bg-slate-200"
                   style={{ width: `${stats?.today.progress ?? 0}%` }}
                 />
               </div>

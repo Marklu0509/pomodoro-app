@@ -108,7 +108,7 @@ export default function HeatmapSection({ className = "" }: HeatmapSectionProps) 
           <div className="w-3 h-3 bg-slate-300"></div>
           <div className="w-3 h-3 bg-slate-500"></div>
           <div className="w-3 h-3 bg-slate-700"></div>
-          <div className="w-3 h-3 bg-slate-900"></div>
+          <div className="w-3 h-3 bg-slate-900 dark:bg-slate-200"></div>
           <span>More</span>
         </div>
       </div>

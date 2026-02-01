@@ -101,7 +101,7 @@ export default function SettingsPage() {
               onClick={() => setSelectedMode(mode)}
               className={`w-full text-left px-5 py-4 rounded-2xl font-semibold transition-all ${
                 selectedMode?.id === mode.id
-                  ? "bg-slate-900 text-white shadow-xl shadow-slate-900/20 scale-[1.02]"
+                  ? "bg-slate-900 text-white shadow-xl shadow-slate-900/20 scale-[1.02] dark:bg-slate-200 dark:text-slate-900"
                   : "glass-panel text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -126,7 +126,7 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSave} 
                 disabled={isSaving} 
-                className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg shadow-slate-900/20"
+                className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg shadow-slate-900/20 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100"
               >
                 {isSaving ? "SAVING..." : "SAVE CHANGES"}
               </button>
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                           onClick={() => handleFieldChange("ambientSound", sound)}
                           className={`px-4 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
                             selectedMode.ambientSound === sound
-                              ? "bg-slate-900 text-white dark:bg-white/15 dark:text-white"
+                              ? "bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900"
                               : "glass-pill text-slate-400 dark:text-slate-300"
                           }`}
                         >
