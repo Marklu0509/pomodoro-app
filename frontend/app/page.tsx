@@ -63,9 +63,9 @@ export default function AuthPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0">
-        <div className="absolute -top-24 left-[-10%] h-[420px] w-[420px] rounded-full bg-cyan-400/20 blur-[120px]" />
-        <div className="absolute top-10 right-[-10%] h-[380px] w-[380px] rounded-full bg-amber-400/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[20%] h-[420px] w-[420px] rounded-full bg-emerald-400/20 blur-[130px]" />
+        <div className="absolute -top-24 left-[-10%] h-[420px] w-[420px] rounded-full bg-blue-900/15 blur-[120px]" />
+        <div className="absolute top-10 right-[-10%] h-[380px] w-[380px] rounded-full bg-slate-500/15 blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[20%] h-[420px] w-[420px] rounded-full bg-slate-800/15 blur-[130px]" />
       </div>
 
       <div className="absolute top-6 right-6 z-20">
@@ -77,7 +77,7 @@ export default function AuthPage() {
           <section className="space-y-8">
             <div className="inline-flex items-center gap-2 glass-pill px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:text-slate-300">
               Focus System
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-slate-200" />
               Glass Mode
             </div>
             <h1 className="text-4xl md:text-5xl font-display font-semibold leading-tight text-slate-900 dark:text-white">
@@ -195,7 +195,7 @@ export default function AuthPage() {
                 className={`w-full rounded-2xl px-4 py-4 text-xs font-semibold uppercase tracking-[0.25em] text-white transition-all ${
                   isLoading
                     ? "bg-slate-400/60 cursor-not-allowed"
-                    : "bg-cyan-500 hover:bg-cyan-400 shadow-lg shadow-cyan-500/30"
+                    : "bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
                 }`}
               >
                 {isLoading ? "Processing" : (isLogin ? "Log In" : "Sign Up & Enter")}

@@ -141,7 +141,7 @@ export default function DashboardPage() {
                   onClick={() => setActiveMode(mode)}
                   className={`rounded-2xl px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
                     activeMode?.id === mode.id
-                      ? "bg-cyan-500/90 text-white shadow-lg shadow-cyan-500/30"
+                      ? "bg-slate-900/90 text-white shadow-lg shadow-slate-900/20"
                       : "glass-pill text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -175,7 +175,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => startFocusSession(null)}
-              className="mt-6 rounded-2xl bg-cyan-500 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-cyan-500/30 hover:bg-cyan-400"
+              className="mt-6 rounded-2xl bg-slate-900 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
             >
               Quick Start Session
             </button>
@@ -233,7 +233,7 @@ export default function DashboardPage() {
             tasks.map((task) => (
               <div 
                 key={task.id} 
-                className="glass-panel rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-[0_20px_50px_rgba(14,116,144,0.18)]"
+                className="glass-panel rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-[0_20px_50px_rgba(15,23,42,0.2)]"
               >
                 <div className="flex-grow">
                   <h3 className="text-xl font-display font-semibold text-slate-900 dark:text-white transition-colors">
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                   {/* Focus Start Button */}
                   <button 
                     onClick={() => startFocusSession(task.id)} 
-                    className="px-6 py-3 rounded-xl bg-cyan-500/90 text-white font-semibold text-[10px] uppercase tracking-[0.25em] hover:brightness-110 transition-all shadow-lg shadow-cyan-500/30"
+                    className="px-6 py-3 rounded-xl bg-slate-900/90 text-white font-semibold text-[10px] uppercase tracking-[0.25em] hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
                   >
                     START
                   </button>

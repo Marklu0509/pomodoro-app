@@ -101,14 +101,14 @@ export default function SettingsPage() {
               onClick={() => setSelectedMode(mode)}
               className={`w-full text-left px-5 py-4 rounded-2xl font-semibold transition-all ${
                 selectedMode?.id === mode.id
-                  ? "bg-cyan-500 text-white shadow-xl shadow-cyan-500/30 scale-[1.02]"
+                  ? "bg-slate-900 text-white shadow-xl shadow-slate-900/20 scale-[1.02]"
                   : "glass-panel text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               {mode.name}
             </button>
           ))}
-          <button onClick={handleAddNew} className="w-full mt-4 px-5 py-4 rounded-2xl border-2 border-dashed border-white/60 dark:border-white/10 text-slate-400 font-semibold hover:text-cyan-400 hover:border-cyan-400 transition-all">
+          <button onClick={handleAddNew} className="w-full mt-4 px-5 py-4 rounded-2xl border-2 border-dashed border-white/60 dark:border-white/10 text-slate-400 font-semibold hover:text-slate-800 hover:border-slate-400 transition-all">
             + New Profile
           </button>
         </div>
@@ -126,7 +126,7 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSave} 
                 disabled={isSaving} 
-                className="bg-cyan-500 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:bg-cyan-400 disabled:opacity-50 transition-all shadow-lg shadow-cyan-500/30"
+                className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg shadow-slate-900/20"
               >
                 {isSaving ? "SAVING..." : "SAVE CHANGES"}
               </button>
@@ -176,7 +176,7 @@ export default function SettingsPage() {
                     type="checkbox" 
                     checked={selectedMode.alertAt25Percent} 
                     onChange={(e) => handleFieldChange("alertAt25Percent", e.target.checked)} 
-                    className="w-6 h-6 rounded-lg text-cyan-500 border-none bg-white/60 dark:bg-white/10 focus:ring-0" 
+                    className="w-6 h-6 rounded-lg text-slate-700 border-none bg-white/60 dark:bg-white/10 focus:ring-0" 
                   />
                   <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Milestone Chimes (75%, 50%, 25%)</span>
                 </label>
@@ -187,8 +187,8 @@ export default function SettingsPage() {
                 <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.3em]">Audio & Background</h4>
                 
                 {/* Background Music Card */}
-                <div className="p-6 border border-cyan-200/60 dark:border-cyan-500/20 bg-cyan-50/40 dark:bg-cyan-950/20 rounded-[2rem] space-y-5">
-                  <label className="text-[10px] font-semibold text-cyan-500 dark:text-cyan-300 block uppercase tracking-widest">YouTube Music Integration</label>
+                <div className="p-6 border border-slate-200/60 dark:border-slate-700/40 bg-slate-50/50 dark:bg-slate-900/30 rounded-[2rem] space-y-5">
+                  <label className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 block uppercase tracking-widest">YouTube Music Integration</label>
                   <select 
                     value={selectedMode.musicType} 
                     onChange={(e) => handleFieldChange("musicType", e.target.value)} 
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                       />
                       {/* Music Volume Control */}
                       <div className="px-1">
-                        <div className="flex justify-between text-[10px] font-semibold text-cyan-500 uppercase mb-2">
+                        <div className="flex justify-between text-[10px] font-semibold text-slate-500 uppercase mb-2">
                           <span>Music Volume</span>
                           <span>{selectedMode.musicVolume}%</span>
                         </div>
@@ -217,7 +217,7 @@ export default function SettingsPage() {
                           type="range" min="0" max="100" 
                           value={selectedMode.musicVolume} 
                           onChange={(e) => handleFieldChange("musicVolume", parseInt(e.target.value))} 
-                          className="w-full h-1.5 bg-cyan-100 dark:bg-cyan-900 rounded-lg appearance-none cursor-pointer accent-cyan-500" 
+                          className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-slate-600" 
                         />
                       </div>
                     </div>

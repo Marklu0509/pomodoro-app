@@ -55,10 +55,10 @@ export default function HeatmapSection({ className = "" }: HeatmapSectionProps) 
   // Helper: Get color scale based on minutes focused
   const getColorClass = (minutes: number) => {
     if (minutes === 0) return "bg-white/60 dark:bg-white/5";
-    if (minutes < 30) return "bg-cyan-200/70 dark:bg-cyan-900/40";
-    if (minutes < 60) return "bg-cyan-400/70 dark:bg-cyan-700/60";
-    if (minutes < 120) return "bg-emerald-400/70 dark:bg-emerald-700/70";
-    return "bg-amber-400/80 dark:bg-amber-500/80";
+    if (minutes < 30) return "bg-slate-200/70 dark:bg-slate-800/50";
+    if (minutes < 60) return "bg-slate-400/70 dark:bg-slate-700/60";
+    if (minutes < 120) return "bg-slate-600/70 dark:bg-slate-500/60";
+    return "bg-slate-900/80 dark:bg-slate-300/80";
   };
 
   // Helper: Find data for a specific date
@@ -104,11 +104,11 @@ export default function HeatmapSection({ className = "" }: HeatmapSectionProps) 
         {/* Legend */}
         <div className="flex items-center justify-end gap-2 text-xs text-slate-500 dark:text-slate-400 mt-2">
           <span>Less</span>
-          <div className="w-3 h-3 bg-cyan-100"></div>
-          <div className="w-3 h-3 bg-cyan-300"></div>
-          <div className="w-3 h-3 bg-cyan-500"></div>
-          <div className="w-3 h-3 bg-emerald-500"></div>
-          <div className="w-3 h-3 bg-amber-400"></div>
+          <div className="w-3 h-3 bg-slate-100"></div>
+          <div className="w-3 h-3 bg-slate-300"></div>
+          <div className="w-3 h-3 bg-slate-500"></div>
+          <div className="w-3 h-3 bg-slate-700"></div>
+          <div className="w-3 h-3 bg-slate-900"></div>
           <span>More</span>
         </div>
       </div>
@@ -175,7 +175,7 @@ export default function HeatmapSection({ className = "" }: HeatmapSectionProps) 
                 className={`
                   h-10 md:h-14 rounded-md border border-white/50 dark:border-white/10 flex flex-col items-center justify-center relative group
                   ${getColorClass(minutes)}
-                  ${isToday ? "ring-2 ring-cyan-400" : ""}
+                  ${isToday ? "ring-2 ring-slate-400" : ""}
                 `}
                 title={`${format(day, "yyyy-MM-dd")}: ${minutes} mins`}
               >
@@ -234,16 +234,16 @@ export default function HeatmapSection({ className = "" }: HeatmapSectionProps) 
       <style jsx global>{`
         .react-calendar-heatmap text { font-size: 10px; fill: #94a3b8; }
         .react-calendar-heatmap .color-empty { fill: rgba(148, 163, 184, 0.15); }
-        .react-calendar-heatmap .color-scale-1 { fill: #67e8f9; }
-        .react-calendar-heatmap .color-scale-2 { fill: #22d3ee; }
-        .react-calendar-heatmap .color-scale-3 { fill: #34d399; }
-        .react-calendar-heatmap .color-scale-4 { fill: #fbbf24; }
+        .react-calendar-heatmap .color-scale-1 { fill: #cbd5f5; }
+        .react-calendar-heatmap .color-scale-2 { fill: #94a3b8; }
+        .react-calendar-heatmap .color-scale-3 { fill: #64748b; }
+        .react-calendar-heatmap .color-scale-4 { fill: #1e293b; }
         .dark .react-calendar-heatmap text { fill: #64748b; }
         .dark .react-calendar-heatmap .color-empty { fill: rgba(148, 163, 184, 0.12); }
-        .dark .react-calendar-heatmap .color-scale-1 { fill: #0e7490; }
-        .dark .react-calendar-heatmap .color-scale-2 { fill: #0891b2; }
-        .dark .react-calendar-heatmap .color-scale-3 { fill: #047857; }
-        .dark .react-calendar-heatmap .color-scale-4 { fill: #f59e0b; }
+        .dark .react-calendar-heatmap .color-scale-1 { fill: #1f2937; }
+        .dark .react-calendar-heatmap .color-scale-2 { fill: #334155; }
+        .dark .react-calendar-heatmap .color-scale-3 { fill: #475569; }
+        .dark .react-calendar-heatmap .color-scale-4 { fill: #e2e8f0; }
         .react-calendar-heatmap rect:hover { stroke: rgba(148,163,184,0.6); stroke-width: 1px; }
       `}</style>
     </div>

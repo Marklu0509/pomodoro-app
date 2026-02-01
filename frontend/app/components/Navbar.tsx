@@ -15,7 +15,7 @@ export default function Navbar() {
             className="text-xl font-display tracking-tight text-slate-900 dark:text-white"
             onClick={() => router.push("/dashboard")}
           >
-            POMO<span className="text-cyan-400">.</span>
+            POMO<span className="text-slate-500 dark:text-slate-300">.</span>
           </button>
           <div className="hidden md:flex gap-6">
             {[
@@ -27,7 +27,7 @@ export default function Navbar() {
               <button
                 key={item.href}
                 onClick={() => router.push(item.href)}
-                className="text-sm font-semibold text-slate-500 dark:text-slate-300 hover:text-cyan-500 transition-colors"
+                className="text-sm font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 {item.label}
               </button>

@@ -84,7 +84,7 @@ export default function StatsPage() {
               </p>
               <div className="mt-4 h-2 rounded-full bg-white/60 dark:bg-white/10">
                 <div
-                  className="h-2 rounded-full bg-gradient-to-r from-cyan-400 to-amber-400"
+                  className="h-2 rounded-full bg-slate-900"
                   style={{ width: `${stats?.today.progress ?? 0}%` }}
                 />
               </div>
@@ -125,14 +125,8 @@ export default function StatsPage() {
               <BarChart data={stats?.weekly ?? []} barSize={28}>
                 <XAxis dataKey="date" stroke="rgba(148,163,184,0.6)" tickLine={false} axisLine={false} />
                 <YAxis stroke="rgba(148,163,184,0.6)" tickLine={false} axisLine={false} />
-                <Tooltip content={<WeeklyTooltip />} cursor={{ fill: "rgba(56,189,248,0.08)" }} />
-                <Bar dataKey="minutes" radius={[12, 12, 4, 4]} fill="url(#weeklyGradient)" />
-                <defs>
-                  <linearGradient id="weeklyGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#22d3ee" />
-                    <stop offset="100%" stopColor="#fbbf24" />
-                  </linearGradient>
-                </defs>
+                <Tooltip content={<WeeklyTooltip />} cursor={{ fill: "rgba(15,23,42,0.08)" }} />
+                <Bar dataKey="minutes" radius={[12, 12, 4, 4]} fill="#1e293b" />
               </BarChart>
             </ResponsiveContainer>
           </div>
