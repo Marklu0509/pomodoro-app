@@ -87,7 +87,7 @@ export default function AuthPage() {
             </p>
             <div className="grid gap-4 sm:grid-cols-2 text-sm text-slate-600 dark:text-slate-300">
               {[
-                "Smart focus profiles + ambient control (YouTube 연결 지원)",
+                "Smart focus profiles + ambient control (YouTube link supported)",
                 "Quick-start sessions for instant flow",
                 "Daily goal tracking with heatmap insights",
                 "Theme toggle built into every surface",
