@@ -76,12 +76,10 @@ export default function AuthPage() {
         <div className="grid w-full gap-10 lg:grid-cols-[1.1fr_0.9fr] items-center">
           <section className="space-y-8">
             <div className="inline-flex items-center gap-2 glass-pill px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:text-slate-300">
-              Focus System
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-slate-200" />
-              Glass Mode
+              Pomodoro
             </div>
             <h1 className="text-4xl md:text-5xl font-display font-semibold leading-tight text-slate-900 dark:text-white">
-              Built for deep work, sculpted in glass.
+              Pomodoro
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-xl">
               Manage tasks, launch focus sessions, and track momentum with a calm UI that keeps your
@@ -89,7 +87,7 @@ export default function AuthPage() {
             </p>
             <div className="grid gap-4 sm:grid-cols-2 text-sm text-slate-600 dark:text-slate-300">
               {[
-                "Smart focus profiles + ambient control",
+                "Smart focus profiles + ambient control (YouTube 연결 지원)",
                 "Quick-start sessions for instant flow",
                 "Daily goal tracking with heatmap insights",
                 "Theme toggle built into every surface",

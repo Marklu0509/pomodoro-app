@@ -124,14 +124,11 @@ export default function DashboardPage() {
       <main className="max-w-6xl mx-auto p-8">
         <header className="grid gap-6 md:grid-cols-[1.3fr_0.7fr] mb-10">
           <div className="glass-card rounded-[2.5rem] p-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              Focus Dashboard
-            </p>
             <h1 className="mt-4 text-3xl md:text-4xl font-display font-semibold text-slate-900 dark:text-white">
-              Today feels intentional.
+              Stay focused.
             </h1>
             <p className="mt-3 text-sm text-slate-500 dark:text-slate-300 max-w-lg">
-              Pick a focus profile, launch a session, and keep your task list streamlined.
+              The clock counts the moments you chose your future self over distraction
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               {focusModes.map((mode) => (
@@ -198,7 +195,7 @@ export default function DashboardPage() {
             </div>
             <div className="w-full">
               <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-[0.25em] mb-2 ml-1">
-                Est. 🍅
+                Estimated times
               </label>
               <input
                 type="number"
