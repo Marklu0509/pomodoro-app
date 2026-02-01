@@ -126,7 +126,7 @@ export default function SettingsPage() {
               <button 
                 onClick={handleSave} 
                 disabled={isSaving} 
-                className="bg-gradient-to-r from-cyan-500 via-sky-500 to-amber-400 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-cyan-500/30"
+                className="bg-cyan-500 text-white px-10 py-4 rounded-2xl font-semibold text-xs tracking-[0.25em] hover:bg-cyan-400 disabled:opacity-50 transition-all shadow-lg shadow-cyan-500/30"
               >
                 {isSaving ? "SAVING..." : "SAVE CHANGES"}
               </button>

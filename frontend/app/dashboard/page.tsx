@@ -175,7 +175,7 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => startFocusSession(null)}
-              className="mt-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-amber-400 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-cyan-500/30 hover:brightness-110"
+              className="mt-6 rounded-2xl bg-cyan-500 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-white shadow-lg shadow-cyan-500/30 hover:bg-cyan-400"
             >
               Quick Start Session
             </button>
