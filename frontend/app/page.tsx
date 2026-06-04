@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import api from "../utils/api";
+import { AxiosError } from "axios";
+import api, { getApiErrorMessage } from "../utils/api";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "./components/ThemeToggle";
 
@@ -48,12 +49,16 @@ export default function AuthPage() {
       // move to dashboard
       router.push("/dashboard");
       
-    } catch (err: any) {
-      console.error("Auth Failed:", err);
-      if (isLogin) {
-         setError("Login failed; please check your email and password");
+    } catch (err: unknown) {
+      // P0.1/0.2: surface the real cause (timeout / network / server message)
+      // instead of always blaming credentials or a duplicate email.
+      const status = err instanceof AxiosError ? err.response?.status : undefined;
+      if (status === 401) {
+        setError("Login failed; please check your email and password.");
+      } else if (status === 403 || status === 409) {
+        setError("Sign up failed; this email is already in use.");
       } else {
-         setError("sign up failed; the email has already been used");
+        setError(getApiErrorMessage(err));
       }
     } finally {
       setIsLoading(false);

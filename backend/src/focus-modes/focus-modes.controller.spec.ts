@@ -1,17 +1,20 @@
-// backend/src/focus-modes/focus-modes.controller.ts
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { FocusModesController } from './focus-modes.controller';
 import { FocusModesService } from './focus-modes.service';
-import { JwtGuard } from '../auth/guard/jwt.guard';
-import { GetUser } from '../auth/decorator/get-user.decorator';
 
-@UseGuards(JwtGuard)
-@Controller('focus-modes')
-export class FocusModesController {
-  constructor(private readonly focusModesService: FocusModesService) {}
+describe('FocusModesController', () => {
+  let controller: FocusModesController;
 
-  // ★ Endpoint to get all profiles for the logged-in user
-  @Get()
-  async getModes(@GetUser('id') userId: number) {
-    return this.focusModesService.findAll(userId);
-  }
-}
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [FocusModesController],
+      providers: [{ provide: FocusModesService, useValue: {} }],
+    }).compile();
+
+    controller = module.get<FocusModesController>(FocusModesController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});

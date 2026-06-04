@@ -1,5 +1,9 @@
 // src/auth/auth.service.ts
-import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -20,7 +24,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    
+
     // Throw error if user doesn't exist
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
@@ -64,13 +68,10 @@ export class AuthService {
   // --- Helper: Generate JWT Token ---
   private async signToken(userId: number, email: string) {
     const payload = { sub: userId, email };
-    
-    // Sign the token with a secret key
-    // Note: In a real production app, use ConfigService to load this from .env
-    const token = await this.jwtService.signAsync(payload, {
-      expiresIn: '1d', // Token expires in 1 day
-      secret: 'super-secret-key',
-    });
+
+    // P0.3: secret + expiry are configured globally in AuthModule's JwtModule
+    // (loaded from JWT_SECRET env). No hardcoded secret here.
+    const token = await this.jwtService.signAsync(payload);
 
     return {
       accessToken: token,
