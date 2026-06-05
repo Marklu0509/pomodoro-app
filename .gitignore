@@ -19,6 +19,10 @@ pnpm-debug.log*
 !.env.example
 !.env.prod.example
 
+# SSH / private keys — never commit
+*.pem
+*.key
+
 # SSH / private keys — NEVER commit these
 *.pem
 *.key
