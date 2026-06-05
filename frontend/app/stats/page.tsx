@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import api from "../../utils/api";
+import { statsApi, getClientTimezone } from "../../utils/api";
 import Navbar from "../components/Navbar";
 import HeatmapSection from "../components/HeatmapSection";
 
@@ -38,7 +38,9 @@ export default function StatsPage() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const res = await api.get("/stats");
+        const res = await statsApi.get("/summary", {
+          params: { tz: getClientTimezone() },
+        });
         setStats(res.data);
       } catch (err) {
         console.error("Failed to load stats", err);

@@ -1,0 +1,9 @@
+# compiled binaries
+/statsd
+*.exe
+*.out
+# local env
+.env
+# coverage
+*.cover
+coverage.txt

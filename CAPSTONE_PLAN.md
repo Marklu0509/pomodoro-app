@@ -8,7 +8,7 @@
 - **部署平台（已選定）**：DigitalOcean Droplet + Docker Compose + Nginx
 - **擴充方案（已選定）**：方案 B — 背景優先 MV3 擴充（WXT + React/TS）
 - **語言策略（已選定）**：TS 為底盤；新增一個聚焦的 **Go 微服務**（stats 分析），非整個後端重寫
-- **整體狀態**：🟢 Phase 0 完成（分支 `feat/phase0-hardening`）；下一步 Phase 1（Go 服務）或 Phase 2（容器化）
+- **整體狀態**：🟢 Phase 0 + Phase 1 完成；下一步 Phase 2（容器化 5 服務 + Caddy/Nginx 反向代理）
 - **組件功能說明**：見 [`COMPONENTS.md`](./COMPONENTS.md)
 
 ---
@@ -65,16 +65,16 @@
 
 ## Phase 1 — Go 分析微服務（新增；引入 Go + 修掉舊 stats 問題）
 
-> 狀態：⬜ 未開始　|　目錄：`stats-service/`
+> 狀態：✅ 完成（2026-06-05；`go vet`/`go build`/`go test` 全綠、health+401 冒煙測試通過、前端 tsc 綠）　|　目錄：`stats-service/`
 
-- [ ] **1.1** 建 Go module；用標準 `net/http` 或 `chi` router，分層（handler / service / repo）
-- [ ] **1.2** JWT 中介層：用 `golang-jwt` 以**共用 `JWT_SECRET`** 驗 HS256 token，取出 userId
-- [ ] **1.3** Postgres 連線（`pgx`）；寫高效聚合查詢（單次 `GROUP BY`），**接收 client timezone 參數**正確分日
-- [ ] **1.4** 端點：`GET /stats-api/summary`、`/stats-api/weekly`、`/stats-api/heatmap`（回傳格式對齊現有前端期望）
-- [ ] **1.5** 表格驅動單元測試（Go `testing`），覆蓋聚合與時區邏輯
-- [ ] **1.6** `stats-service/Dockerfile`：多階段 build → `distroless`/`scratch`，目標 image ~15MB
-- [ ] **1.7** 前端 stats 呼叫改打 `/stats-api`；NestJS `stats` 模組標記為棄用或保留為 fallback
-  - 驗收：Go 服務本機可起、JWT 驗證通過、heatmap/weekly 數字與舊版一致且時區正確、`go test ./...` 綠燈
+- [x] **1.1** Go module（`go 1.23`）+ chi router，分層 `cmd/server` + `internal/{auth,config,stats,httpx}`
+- [x] **1.2** JWT 中介層（`golang-jwt/v5`）：共用 `JWT_SECRET` 驗 HS256，含「只接受 HMAC」安全檢查、`sub`→userId 入 context；4 情境測試
+- [x] **1.3** `pgx/v5` repo：單次 `GROUP BY` + `AT TIME ZONE` 依 client tz 分日（修掉 N+1 + 時區 bug）；`PgRepository` 唯讀
+- [x] **1.4** 端點 `GET /stats-api/summary`、`/stats-api/heatmap`（+ `/health`）。**weekly 併入 summary 回傳**以對齊前端單一呼叫的契約
+- [x] **1.5** 表格驅動測試（service 用 fake repo，免 DB）：summary/gap-fill/progress clamp/heatmap 排序 + auth 4 案
+- [x] **1.6** `stats-service/Dockerfile`：多階段 → `distroless/static`，`time/tzdata` 內嵌（image build 待 Phase 2 docker daemon）
+- [x] **1.7** 前端新增 `statsApi` 實例打 `/stats-api` + 帶 `tz`（`getClientTimezone`）；改 `app/stats` 與 `HeatmapSection`。NestJS `stats` 模組保留為 fallback（現已無人呼叫）
+  - 驗收：✅ `go test ./...` 綠、JWT 驗證通過、契約對齊前端、前端 tsc 綠
 
 ## Phase 2 — 真正容器化（補上 README 宣稱卻不存在的檔案）
 
@@ -214,6 +214,7 @@ bcrypt 雜湊、JWT、ownership 檢查、`@Delete('all')` 路由順序、transac
 | 2026-06-03 | 改版 v2：加入擴充方案 B（P6）、Go 分析微服務（P1）、調整架構與順序、stats 時區/N+1 改由 Go 處理 | — |
 | 2026-06-04 | 架構審查通過（補上「單一寫入者」黃金規則）；確認 D2 網域已定；新增 `COMPONENTS.md` 組件功能說明 | — |
 | 2026-06-05 | **Phase 0 完成**（D1/D3/D4 採建議：先網頁、Caddy、Go 只 stats）。TDD 修 0.1–0.5 + 修好 6 個壞測試 + 提前做 setGlobalPrefix + 新增 .env.example。後端 build/jest(18) 綠、前端 tsc 綠 | P0 全部 |
+| 2026-06-05 | **Phase 1 完成**：`stats-service/` Go 微服務（chi+golang-jwt+pgx，分層、單次 GROUP BY+時區、distroless Dockerfile、README）；前端改打 `/stats-api`+tz。go test/vet/build 綠、前端 tsc 綠 | P1 全部 |
 
 ---
 

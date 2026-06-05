@@ -16,7 +16,7 @@ import {
   subMonths,
   getDay 
 } from "date-fns";
-import api from "../../utils/api";
+import { statsApi, getClientTimezone } from "../../utils/api";
 
 interface HeatmapData {
   date: string;  // "YYYY-MM-DD"
@@ -41,7 +41,9 @@ export default function HeatmapSection({ className = "" }: HeatmapSectionProps) 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get("/stats/heatmap");
+        const res = await statsApi.get("/heatmap", {
+          params: { tz: getClientTimezone() },
+        });
         setData(res.data);
       } catch (err) {
         console.error("Failed to load heatmap data", err);

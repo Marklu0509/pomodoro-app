@@ -1,26 +1,46 @@
 // src/utils/api.ts
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, type AxiosInstance } from 'axios';
 
-// create an axios Instance
-const api = axios.create({
-  // Use the env var in the cloud; default to same-origin '/api' so it works behind
-  // the Nginx reverse proxy (no hardcoded localhost, no mixed-content in production).
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  // P0.1: fail fast instead of hanging forever when the backend is unreachable.
-  timeout: 10000,
-});
+// Attach the JWT (same token works for both NestJS and the Go stats service).
+function attachAuthInterceptor(instance: AxiosInstance): AxiosInstance {
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+  return instance;
+}
 
-// Attach the JWT to every request.
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Main API -> NestJS, behind Nginx at the same-origin '/api'.
+const api = attachAuthInterceptor(
+  axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+    headers: { 'Content-Type': 'application/json' },
+    // P0.1: fail fast instead of hanging forever when the backend is unreachable.
+    timeout: 10000,
+  }),
+);
+
+// Stats API -> Go microservice, behind Nginx at the same-origin '/stats-api'.
+export const statsApi = attachAuthInterceptor(
+  axios.create({
+    baseURL: process.env.NEXT_PUBLIC_STATS_API_URL || '/stats-api',
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 10000,
+  }),
+);
+
+// The browser's IANA timezone (e.g. "Asia/Taipei"); sent so the Go service
+// buckets sessions by the user's local day, not the server's.
+export function getClientTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
   }
-  return config;
-});
+}
 
 /**
  * P0.1: normalize errors so the UI always has a human-readable message
