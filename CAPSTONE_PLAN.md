@@ -8,7 +8,7 @@
 - **部署平台（已選定）**：DigitalOcean Droplet + Docker Compose + Nginx
 - **擴充方案（已選定）**：方案 B — 背景優先 MV3 擴充（WXT + React/TS）
 - **語言策略（已選定）**：TS 為底盤；新增一個聚焦的 **Go 微服務**（stats 分析），非整個後端重寫
-- **整體狀態**：🟢 Phase 0 + 1 + 2 完成、Phase 3 大致完成（本機 5 服務端到端跑通）；下一步 Phase 4（開 Droplet 上線、真網域 HTTPS）
+- **整體狀態**：🟢 Phase 0–3 + 5 完成、Phase 4 runbook 已備（待使用者上線）；里程碑 M1（網頁版可上線）達成、M2（README/CI）達成。下一步：使用者照 DEPLOY.md 上線，或進 Phase 6（擴充）
 - **組件功能說明**：見 [`COMPONENTS.md`](./COMPONENTS.md)
 
 ---
@@ -99,19 +99,20 @@
 
 ## Phase 4 — 開 Droplet 並上線
 
-> 狀態：⬜ 未開始
+> 狀態：🟡 Runbook 已備（`DEPLOY.md`）；實際上線需使用者操作 DO 帳號 + 網域 DNS
 
-- [ ] **4.1** 建 Ubuntu Droplet、裝 Docker + Compose、設防火牆（22/80/443）
-- [ ] **4.2** clone、填 `.env.prod`、`docker compose -f docker-compose.prod.yml up -d --build`
-- [ ] **4.3** 跑 migration（`migrate deploy`）、簽 TLS 憑證
-- [ ] **4.4** 生產冒煙測試：註冊 → 登入 → 建任務 → 跑一輪 → heatmap/stats(Go) 正確
+- [x] **4.0** 寫 `DEPLOY.md` 部署手冊（建 Droplet → DNS A record → ufw → Docker → clone → `.env.prod` → up → 驗證 → 更新 → 每日 pg_dump 備份 → 1GB swap → 疑難排解）
+- [ ] **4.1** 建 Ubuntu Droplet、裝 Docker + Compose、設防火牆（22/80/443）← 待使用者
+- [ ] **4.2** clone、填 `.env.prod`（`DOMAIN=真網域`）、`docker compose ... up -d --build` ← 待使用者
+- [ ] **4.3** Caddy 自動簽 TLS（DNS 指對後自動）← 待使用者
+- [ ] **4.4** 生產冒煙測試（同本機已驗證的流程）← 待使用者
 
 ## Phase 5 — 讓 README 誠實 + CI
 
-> 狀態：⬜ 未開始
+> 狀態：✅ 完成（2026-06-05；三條 CI 線本機驗證全綠）
 
-- [ ] **5.1** 更新 `Readme.md`：架構圖（含 Go 服務 + 擴充）、技術棧、部署步驟對齊**實際**檔案
-- [ ] **5.2** `.github/workflows/ci.yml`：TS 端 lint+test+build、Go 端 `go vet`+`go test`
+- [x] **5.1** 重寫 `Readme.md`：修正 Vite→Next.js、Nginx→Caddy、加入 Go 微服務、實際結構、架構圖（含 /stats-api + 單一寫入者）、ERD 表名對齊、連結 COMPONENTS/DEPLOY
+- [x] **5.2** `.github/workflows/ci.yml`：3 個平行 job — backend(npm test+build)、frontend(tsc+build)、stats(go vet+test+build)。本機驗證：Go 綠、後端 18 測試綠、前端 build 綠
 
 ## Phase 6 — Chrome 擴充功能（方案 B：背景優先 MV3 + WXT）
 
@@ -216,6 +217,7 @@ bcrypt 雜湊、JWT、ownership 檢查、`@Delete('all')` 路由順序、transac
 | 2026-06-05 | **Phase 0 完成**（D1/D3/D4 採建議：先網頁、Caddy、Go 只 stats）。TDD 修 0.1–0.5 + 修好 6 個壞測試 + 提前做 setGlobalPrefix + 新增 .env.example。後端 build/jest(18) 綠、前端 tsc 綠 | P0 全部 |
 | 2026-06-05 | **Phase 1 完成**：`stats-service/` Go 微服務（chi+golang-jwt+pgx，分層、單次 GROUP BY+時區、distroless Dockerfile、README）；前端改打 `/stats-api`+tz。go test/vet/build 綠、前端 tsc 綠 | P1 全部 |
 | 2026-06-05 | **Phase 2 完成 + Phase 3 大致完成**：5 個 Dockerfile/compose/Caddyfile/.env.prod.example；本機實際 build+up，端到端冒煙測試全通過（跨服務 JWT + 共用 DB 寫讀驗證）。修了 3 個雷：Prisma/Alpine openssl、dist/src/main 路徑、pgx 不吃 ?schema=public | P2 全部、P3.1–3.3 |
+| 2026-06-05 | **Phase 4 runbook + Phase 5 完成**：`DEPLOY.md` 部署手冊（含每日備份/swap/疑難排解）；重寫 `Readme.md` 對齊實際；`ci.yml` 三線 CI。三條 CI 本機驗證全綠 | P4.0、P5 全部 |
 
 ---
 

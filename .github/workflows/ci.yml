@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Three independent jobs run in parallel, one per service.
+jobs:
+  backend:
+    name: Backend (NestJS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Test
+        run: npm test
+        env:
+          # unit tests mock the DB; these just satisfy env validation/wiring.
+          JWT_SECRET: ci-test-secret-key-1234567890
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+      - run: npm run build
+
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Type-check
+        run: npx tsc --noEmit
+      - run: npm run build
+
+  stats-service:
+    name: Stats Service (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stats-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: stats-service/go.sum
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build ./...

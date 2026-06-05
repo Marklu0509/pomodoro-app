@@ -1,250 +1,238 @@
-# 🍅 FocusFlow: Enterprise-Grade Pomodoro Application
+# 🍅 FocusFlow — Full-Stack Pomodoro App
 
-> A full-stack, DevOps-enabled productivity tool designed to demonstrate modern software architecture, containerization, and clean code practices.
+> A multi-client productivity tool (web + browser extension) on a polyglot
+> microservice backend, fully containerized with automatic HTTPS.
 
 ### 📖 Introduction
-**FocusFlow** is not just another timer; it's a solution for the distracted mind, built with the rigor of an enterprise application. It combines the **Pomodoro Technique** with **Task Management** to help users achieve deep work states.
+**FocusFlow** combines the **Pomodoro Technique** with task management and focus
+analytics. It's built as a portfolio piece to demonstrate real full-stack +
+DevOps practices end to end:
 
-This project serves as a portfolio showcase demonstrating:
-* **System Architecture**: Clean Architecture principles with a decoupled frontend and backend.
-* **DevOps Mindset**: Fully containerized environment using Docker & automated CI/CD pipelines.
-* **Data Integrity**: Robust database schema design with PostgreSQL and Prisma ORM.
-* **Type Safety**: End-to-end type safety using TypeScript.
+* **Polyglot microservices** — a TypeScript (NestJS) API for writes, plus a
+  small **Go** service for read-heavy analytics.
+* **Stateless auth** — JWT (HS256) verified independently by both services using
+  a shared secret, so the system scales horizontally.
+* **Containerized delivery** — every service is a Docker image, orchestrated by
+  Docker Compose behind a single Caddy reverse proxy with automatic HTTPS.
+* **Type safety** — TypeScript across web/extension/backend; typed Go service.
+
+See [`COMPONENTS.md`](./COMPONENTS.md) for a component-by-component breakdown and
+[`DEPLOY.md`](./DEPLOY.md) for the deployment runbook.
 
 ---
 
 ### 🛠 Tech Stack
 
-**Backend & Database**
-* ![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white) **NestJS**: For scalable server-side architecture.
-* ![PostgreSQL](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white) **PostgreSQL**: Relational database for persistent data storage.
-* ![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white) **Prisma**: Next-generation ORM.
-* ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens) **JWT**: Secure stateless authentication.
+**Backend**
+* **NestJS** (TypeScript) — auth, tasks, sessions, settings, focus modes. **Owns the schema and all writes.**
+* **Go** (`stats-service`) — read-only analytics (summary, weekly, heatmap); chi + pgx + golang-jwt.
+* **PostgreSQL** — relational data store (accessed via Prisma from NestJS; via pgx read-only from Go).
+* **JWT** — stateless authentication shared across both services.
 
 **Frontend**
-* ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) **React (Vite)**: Fast and responsive UI.
-* ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) **TypeScript**: For static typing and code reliability.
-* ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) **Tailwind CSS / Shadcn UI**: For modern styling.
+* **Next.js** (App Router) + **React** + **TypeScript**.
+* **Tailwind CSS** for styling; **recharts** + a calendar heatmap for analytics.
+* (Planned) **Chrome extension** sharing the same backend — see `CAPSTONE_PLAN.md` Phase 6.
 
 **DevOps & Infrastructure**
-* ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) **Docker & Compose**: Containerization for consistent environments.
-* ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white) **GitHub Actions**: CI/CD for automated testing and checks.
+* **Docker & Docker Compose** — multi-stage builds; Go image ~20 MB.
+* **Caddy** — single entrypoint, path-based reverse proxy, **automatic HTTPS** (Let's Encrypt).
+* **GitHub Actions** — CI: lint/test/build for TypeScript + `go vet`/`go test` for Go.
 
+---
 
-
-
-#Structure
+### 📁 Project Structure
 ```text
-pomodoro-monorepo/
-├── .github/
-│   └── workflows/
-│       ├── ci-backend.yml    # 後端自動測試與檢查
-│       └── ci-frontend.yml   # 前端建置檢查
-├── backend/                  # NestJS 專案
-│   ├── src/
-│   ├── Dockerfile            # 後端映像檔設定 (Multi-stage build)
-│   ├── .env.example          # 環節變數範本 (不包含敏感資料)
-│   └── package.json
-├── frontend/                 # React + Vite 專案
-│   ├── src/
-│   ├── Dockerfile            # 前端映像檔設定 (Nginx hosting)
-│   └── package.json
-├── docker-compose.yml        # 一鍵啟動整個開發環境
-├── docker-compose.prod.yml   # 生產環境配置 (模擬)
-└── README.md                 # 專案門面
+pomodoro-app/
+├── .github/workflows/ci.yml      # CI: backend + frontend + Go stats service
+├── frontend/                     # Next.js app (web client)
+│   ├── app/                      # routes, components
+│   ├── utils/api.ts              # axios clients: /api (NestJS) + /stats-api (Go)
+│   └── Dockerfile                # Next.js standalone build
+├── backend/                      # NestJS API (writes + schema owner)
+│   ├── src/                      # auth, tasks, sessions, settings, focus-modes
+│   ├── prisma/                   # schema + migrations
+│   ├── .env.example
+│   └── Dockerfile                # multi-stage; runs `prisma migrate deploy` on start
+├── stats-service/                # Go analytics microservice (read-only)
+│   ├── cmd/server, internal/…    # auth (JWT) / config / stats (repo→service→handler)
+│   └── Dockerfile                # multi-stage → distroless (~20 MB)
+├── caddy/Caddyfile               # reverse proxy + automatic HTTPS
+├── docker-compose.prod.yml       # db + backend + stats-service + frontend + caddy
+├── docker-compose.yml            # local DB only (Postgres + pgAdmin) for dev
+├── .env.prod.example
+├── COMPONENTS.md                 # component reference
+├── DEPLOY.md                     # DigitalOcean deployment runbook
+└── CAPSTONE_PLAN.md              # roadmap / progress tracker
 ```
 
+---
 
+### 🚀 Run it
 
-#ERDiagram
-```mermaid
-erDiagram
-    %% Core Identity
-    users {
-        int id PK "Primary Key"
-        varchar email UK "Unique, Indexed"
-        varchar password_hash "Bcrypt hash"
-        varchar display_name
-        timestamp created_at "Default NOW()"
-        timestamp updated_at
-    }
-
-    %% User Preferences (1:1 Relationship)
-    user_settings {
-        int id PK
-        int user_id FK "Foreign Key -> users.id"
-        int focus_duration_min "Default: 25"
-        int short_break_min "Default: 5"
-        int long_break_min "Default: 15"
-        boolean auto_start_breaks "Default: false"
-        boolean auto_start_pomodoros "Default: false"
-        timestamp updated_at
-    }
-
-    %% Task Management (1:N Relationship)
-    tasks {
-        int id PK
-        int user_id FK "Foreign Key -> users.id"
-        varchar title
-        text description "Nullable"
-        int estimated_pomodoros "Target count"
-        int completed_pomodoros "Cached count"
-        boolean is_completed
-        boolean is_archived "Soft delete flag"
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    %% Pomodoro History (The Core Data)
-    pomodoro_sessions {
-        int id PK
-        int user_id FK "Foreign Key -> users.id"
-        int task_id FK "Nullable, Foreign Key -> tasks.id"
-        timestamp start_time
-        timestamp end_time
-        int duration_seconds "Actual focus time"
-        varchar status "COMPLETED | INTERRUPTED"
-        timestamp created_at
-    }
-
-    %% Relationships
-    users ||--|| user_settings : "configures"
-    users ||--o{ tasks : "owns"
-    users ||--o{ pomodoro_sessions : "generates"
-    tasks |o--o{ pomodoro_sessions : "tracks"
+**Full stack locally (Docker):**
+```bash
+cp .env.prod.example .env.prod        # set DOMAIN=:80 for plain-HTTP local test
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+# open http://localhost
 ```
 
+**Deploy to a server:** follow [`DEPLOY.md`](./DEPLOY.md) (DigitalOcean Droplet,
+real domain, automatic HTTPS).
 
+---
 
-
-#Sequence Diagram
-```mermaid
-sequenceDiagram
-    autonumber
-    
-    actor Client as Client (React/Vite)
-    participant Guard as AuthGuard (JWT)
-    participant Ctrl as SessionsController
-    participant Svc as SessionsService
-    participant DB as Prisma/Postgres
-
-    Note over Client: Timer finishes (25:00)
-
-    Client->>Guard: POST /api/v1/sessions
-    Note right of Client: Header: Bearer <token><br/>Body: CreateSessionDto { taskId, duration }
-
-    activate Guard
-    Guard->>Guard: Validate Token
-    Guard-->>Ctrl: Pass (User Context)
-    deactivate Guard
-
-    activate Ctrl
-    Ctrl->>Svc: create(userId, createSessionDto)
-    activate Svc
-
-    %% Business Logic
-    alt Task ID provided
-        Svc->>DB: findTask(taskId)
-        DB-->>Svc: Task Entity
-        
-        break Task not owned by user
-            Svc-->>Ctrl: Throw ForbiddenException
-            Ctrl-->>Client: 403 Forbidden
-        end
-    end
-
-    Svc->>DB: createSession(data)
-    DB-->>Svc: Session Entity (Created)
-
-    %% Optional: Update Task Progress
-    opt Link to Task
-        Svc->>DB: updateTask(increment_count)
-    end
-
-    Svc-->>Ctrl: Session Entity
-    deactivate Svc
-
-    Ctrl-->>Client: 201 Created (JSON)
-    deactivate Ctrl
-```
-
-
-
-#High-Level System Architecture
+### 🏗 High-Level System Architecture
 ```mermaid
 graph TD
-    %% Styling
     classDef client fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
     classDef proxy fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
     classDef app fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
     classDef data fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
 
-    %% 修正點：加上雙引號 ["..."] 以支援括號
-    subgraph Host ["Host Machine (Local or Cloud VPS)"]
-        
-        %% Client Browser
-        Browser[Client Browser]:::client
-        
-        %% Docker Network Boundary
-        subgraph DockerNetwork ["Docker Network"]
+    Browser[Web (Next.js) + Chrome Extension]:::client
+
+    subgraph Host ["DigitalOcean Droplet"]
+        subgraph DockerNetwork ["Docker network"]
             direction TB
-            
-            %% Reverse Proxy
-            Nginx[Nginx Reverse Proxy<br/>Port: 80/443]:::proxy
-            
-            %% Frontend Container
-            Frontend[Frontend Container<br/>React/Vite App<br/>Port: 80]:::app
-            
-            %% Backend Container
-            Backend[Backend Container<br/>NestJS API<br/>Port: 3000]:::app
-            
-            %% Database Container
-            DB[(PostgreSQL DB<br/>Port: 5432)]:::data
+            Caddy[Caddy Reverse Proxy<br/>80/443 · auto HTTPS]:::proxy
+            Frontend[Frontend<br/>Next.js · 3000]:::app
+            Backend[Backend<br/>NestJS · 3000<br/>writes + schema]:::app
+            Stats[Stats Service<br/>Go · 4000<br/>read-only]:::app
+            DB[(PostgreSQL · 5432)]:::data
         end
-        
-        %% Data Persistence
         Volume[Docker Volume<br/>pg_data]:::data
     end
 
-    %% Connections
-    Browser -- "HTTP Requests" --> Nginx
-    Nginx -- "Static Assets" --> Frontend
-    Nginx -- "/api/*" --> Backend
-    Backend -- "Prisma Client (TCP)" --> DB
+    Browser -- HTTPS --> Caddy
+    Caddy -- "/" --> Frontend
+    Caddy -- "/api/*" --> Backend
+    Caddy -- "/stats-api/*" --> Stats
+    Backend -- "Prisma (read/write)" --> DB
+    Stats -- "pgx (read-only)" --> DB
     DB -.-> Volume
 ```
+> **Single-writer rule:** NestJS owns the schema and is the only writer; the Go
+> service only reads. Both verify the same JWT (HS256) independently.
 
+---
 
-#State Machine
+### 🗄 Entity Relationship Diagram
+```mermaid
+erDiagram
+    users {
+        int id PK
+        varchar email UK
+        varchar password_hash "bcrypt hash"
+        varchar name "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+    settings {
+        int id PK
+        int user_id FK "-> users.id (1:1)"
+        int work_duration "default 25"
+        int short_break_duration "default 5"
+        int long_break_duration "default 15"
+        int daily_goal "default 120"
+        boolean auto_start_breaks
+        boolean auto_start_pomodoros
+    }
+    focus_modes {
+        int id PK
+        int user_id FK "-> users.id"
+        varchar name
+        int work_duration
+        boolean is_default
+    }
+    tasks {
+        int id PK
+        int user_id FK "-> users.id"
+        varchar title
+        text description "nullable"
+        int estimated_pomodoros
+        int completed_pomodoros
+        boolean is_completed
+        boolean is_archived
+    }
+    pomodoro_sessions {
+        int id PK
+        int user_id FK "-> users.id"
+        int task_id FK "nullable -> tasks.id"
+        timestamp start_time
+        timestamp end_time
+        int duration_seconds
+        varchar status "COMPLETED | ABANDONED"
+    }
+
+    users ||--|| settings : "configures"
+    users ||--o{ focus_modes : "defines"
+    users ||--o{ tasks : "owns"
+    users ||--o{ pomodoro_sessions : "generates"
+    tasks |o--o{ pomodoro_sessions : "tracks"
+```
+
+---
+
+### 🔁 Create-Session Sequence
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Web / Extension
+    participant Caddy
+    participant Guard as JwtGuard
+    participant Ctrl as SessionsController
+    participant Svc as SessionsService
+    participant DB as Prisma/Postgres
+
+    Note over Client: Timer finishes (25:00)
+    Client->>Caddy: POST /api/sessions (Bearer token)
+    Caddy->>Guard: forward to backend
+    activate Guard
+    Guard->>Guard: validate JWT
+    Guard-->>Ctrl: user context
+    deactivate Guard
+    activate Ctrl
+    Ctrl->>Svc: create(userId, dto)
+    activate Svc
+    alt taskId provided
+        Svc->>DB: find task
+        DB-->>Svc: task
+        break task not owned by user
+            Svc-->>Client: 403 Forbidden
+        end
+    end
+    Svc->>DB: create session (+ increment task in a transaction)
+    DB-->>Svc: session
+    Svc-->>Ctrl: session
+    deactivate Svc
+    Ctrl-->>Client: 201 Created
+    deactivate Ctrl
+```
+
+---
+
+### ⏱ Timer State Machine
 ```mermaid
 stateDiagram-v2
-    %% Styling
     classDef work fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
     classDef break fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
-    classDef idle fill:#f5f5f5,stroke:#333,stroke-width:2px;
 
-    [*] --> Idle:::idle
-
+    [*] --> Idle
     state "Idle (Ready)" as Idle
-    state "Focus Session (Running)" as Focus:::work
+    state "Focus Session" as Focus:::work
     state "Paused" as Paused
     state "Short Break (5m)" as ShortBreak:::break
     state "Long Break (15m)" as LongBreak:::break
-    
-    %% Logic Flow
-    Idle --> Focus : Start Timer
-    
-    Focus --> Paused : User Pauses
-    Paused --> Focus : User Resumes
-    Paused --> Idle : User Aborts
 
-    Focus --> DecisionPoint : Timer Finishes
+    Idle --> Focus : Start
+    Focus --> Paused : Pause
+    Paused --> Focus : Resume
+    Paused --> Idle : Abort
+    Focus --> DecisionPoint : Timer finishes
     state DecisionPoint <<choice>>
-
-    %% Business Logic: 4th pomodoro leads to long break
-    DecisionPoint --> ShortBreak : Count < 4
-    DecisionPoint --> LongBreak : Count % 4 == 0
-
-    ShortBreak --> Idle : Break Ends
-    LongBreak --> Idle : Break Ends
+    DecisionPoint --> ShortBreak : count % 4 != 0
+    DecisionPoint --> LongBreak : count % 4 == 0
+    ShortBreak --> Idle : Break ends
+    LongBreak --> Idle : Break ends
 ```
