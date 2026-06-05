@@ -13,6 +13,11 @@ pnpm-debug.log*
 .env
 .env.*.local
 .env.local
+.env.prod
+.env.production
+# keep example files tracked
+!.env.example
+!.env.prod.example
 
 # Next.js / React build
 .next/

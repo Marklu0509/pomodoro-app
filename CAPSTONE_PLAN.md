@@ -8,7 +8,7 @@
 - **部署平台（已選定）**：DigitalOcean Droplet + Docker Compose + Nginx
 - **擴充方案（已選定）**：方案 B — 背景優先 MV3 擴充（WXT + React/TS）
 - **語言策略（已選定）**：TS 為底盤；新增一個聚焦的 **Go 微服務**（stats 分析），非整個後端重寫
-- **整體狀態**：🟢 Phase 0 + Phase 1 完成；下一步 Phase 2（容器化 5 服務 + Caddy/Nginx 反向代理）
+- **整體狀態**：🟢 Phase 0 + 1 + 2 完成、Phase 3 大致完成（本機 5 服務端到端跑通）；下一步 Phase 4（開 Droplet 上線、真網域 HTTPS）
 - **組件功能說明**：見 [`COMPONENTS.md`](./COMPONENTS.md)
 
 ---
@@ -78,24 +78,24 @@
 
 ## Phase 2 — 真正容器化（補上 README 宣稱卻不存在的檔案）
 
-> 狀態：⬜ 未開始
+> 狀態：✅ 完成（2026-06-05；本機實際 build + up + 端到端冒煙測試全通過）
 
-- [ ] **2.1** `backend/Dockerfile`（多階段；啟動 `prisma migrate deploy` 再 `node dist/main`）
-- [ ] **2.2** `frontend/Dockerfile`（Next.js standalone；`next.config.ts` 加 `output: 'standalone'`）
-- [ ] **2.3** 後端加 `app.setGlobalPrefix('api')`；前端 `NEXT_PUBLIC_API_URL=/api`、stats base=`/stats-api`
-- [ ] **2.4** `docker-compose.prod.yml`：`db` + `backend` + `stats-service` + `frontend` + `nginx`，含 healthcheck / depends_on / named volume
-- [ ] **2.5** `.env.prod.example`：`POSTGRES_*`、`DATABASE_URL`、`JWT_SECRET`、`FRONTEND_ORIGIN`、`DOMAIN`
-- [ ] **2.6** 確認 `.gitignore` 涵蓋 `.env.prod`（secrets 不進 git）
-  - 驗收：本機 `docker compose -f docker-compose.prod.yml up --build` 五服務全起
+- [x] **2.1** `backend/Dockerfile`（多階段；`prisma migrate deploy` → `node dist/src/main`）。踩雷修正：Alpine 需 `openssl` + schema `binaryTargets` 加 `linux-musl-openssl-3.0.x`；進入點是 `dist/src/main`
+- [x] **2.2** `frontend/Dockerfile`（Next.js standalone；`next.config.ts` 加 `output:'standalone'`）→ 374MB
+- [x] **2.3** 後端 `setGlobalPrefix('api')`（P0 已做）；前端同源 `/api`、`/stats-api` 預設（P1 已做）
+- [x] **2.4** `docker-compose.prod.yml`：`db`+`backend`+`stats-service`+`frontend`+`caddy`，healthcheck/depends_on(service_healthy)/named volume；只對外開 Caddy。踩雷修正：stats-service 的 DATABASE_URL **不可帶 `?schema=public`**（pgx 不認）
+- [x] **2.5** `.env.prod.example`（POSTGRES_*、JWT_SECRET、FRONTEND_ORIGIN、DOMAIN；DATABASE_URL 由 compose 組）
+- [x] **2.6** `.gitignore` 補 `.env.prod`（已驗證 ignored）
+  - 驗收：✅ 五服務全起；image 大小 stats=20MB / frontend=374MB / backend=697MB；端到端：signup→login→建 session(NestJS 寫)→Go summary 讀到 25min/progress21（跨服務 JWT + 共用 DB 驗證成功）
 
-## Phase 3 — Nginx 反向代理 + HTTPS
+## Phase 3 — Caddy 反向代理 + HTTPS
 
-> 狀態：⬜ 未開始（依賴 D2 網域、D3 TLS）
+> 狀態：🟡 大致完成（隨 Phase 2 一起做）；正式 TLS 待 Phase 4 在 Droplet 上用真網域驗證
 
-- [ ] **3.1** `nginx/nginx.conf`：`/`→frontend、`/api/`→backend、`/stats-api/`→Go，含 gzip + security headers
-- [ ] **3.2** TLS（依 D3：Certbot 或 Caddy）+ 自動續期
-- [ ] **3.3** 確認三條路徑同源皆通、無 mixed-content
-  - 驗收：`https://<domain>/`、`/api/...`、`/stats-api/...` 全通
+- [x] **3.1** `caddy/Caddyfile`：`/api/*`→backend、`/stats-api/*`→Go、其餘→frontend（用 `handle` 保留路徑）+ security headers + gzip
+- [x] **3.2** TLS：採 Caddy 自動 HTTPS（`{$DOMAIN}` 真網域時自動申請 Let's Encrypt；本機用 `:80` 純 HTTP 驗證路由）
+- [x] **3.3** 三條路徑同源皆通（本機 http://localhost 驗證 `/`、`/api/...`、`/stats-api/...` 全 200）
+  - ⏳ 待辦：在 Droplet 設 `DOMAIN=真網域`，驗證自動 HTTPS（Phase 4）
 
 ## Phase 4 — 開 Droplet 並上線
 
@@ -215,6 +215,7 @@ bcrypt 雜湊、JWT、ownership 檢查、`@Delete('all')` 路由順序、transac
 | 2026-06-04 | 架構審查通過（補上「單一寫入者」黃金規則）；確認 D2 網域已定；新增 `COMPONENTS.md` 組件功能說明 | — |
 | 2026-06-05 | **Phase 0 完成**（D1/D3/D4 採建議：先網頁、Caddy、Go 只 stats）。TDD 修 0.1–0.5 + 修好 6 個壞測試 + 提前做 setGlobalPrefix + 新增 .env.example。後端 build/jest(18) 綠、前端 tsc 綠 | P0 全部 |
 | 2026-06-05 | **Phase 1 完成**：`stats-service/` Go 微服務（chi+golang-jwt+pgx，分層、單次 GROUP BY+時區、distroless Dockerfile、README）；前端改打 `/stats-api`+tz。go test/vet/build 綠、前端 tsc 綠 | P1 全部 |
+| 2026-06-05 | **Phase 2 完成 + Phase 3 大致完成**：5 個 Dockerfile/compose/Caddyfile/.env.prod.example；本機實際 build+up，端到端冒煙測試全通過（跨服務 JWT + 共用 DB 寫讀驗證）。修了 3 個雷：Prisma/Alpine openssl、dist/src/main 路徑、pgx 不吃 ?schema=public | P2 全部、P3.1–3.3 |
 
 ---
 

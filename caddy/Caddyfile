@@ -1,0 +1,28 @@
+# Single public entrypoint. {$DOMAIN} comes from the environment:
+#   - production: a real hostname (e.g. pomodoro.example.com) -> automatic HTTPS
+#   - local test: "localhost" -> Caddy's local CA, or ":80" for plain HTTP
+{$DOMAIN:localhost} {
+	encode gzip
+
+	# /api/* -> NestJS backend (keeps the /api prefix; matches setGlobalPrefix).
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	# /stats-api/* -> Go stats microservice (keeps the /stats-api prefix).
+	handle /stats-api/* {
+		reverse_proxy stats-service:4000
+	}
+
+	# everything else -> Next.js frontend.
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	# basic security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

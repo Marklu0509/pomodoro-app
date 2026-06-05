@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -28,6 +29,7 @@ func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.svc.Summary(r.Context(), userID, loc, time.Now())
 	if err != nil {
+		log.Printf("summary failed for user %d: %v", userID, err)
 		httpx.Error(w, http.StatusInternalServerError, "failed to compute summary")
 		return
 	}
@@ -45,6 +47,7 @@ func (h *Handler) Heatmap(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.svc.Heatmap(r.Context(), userID, loc, time.Now())
 	if err != nil {
+		log.Printf("heatmap failed for user %d: %v", userID, err)
 		httpx.Error(w, http.StatusInternalServerError, "failed to compute heatmap")
 		return
 	}
