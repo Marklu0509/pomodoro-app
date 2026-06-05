@@ -19,6 +19,13 @@ pnpm-debug.log*
 !.env.example
 !.env.prod.example
 
+# SSH / private keys — NEVER commit these
+*.pem
+*.key
+id_rsa
+id_rsa.*
+*.ppk
+
 # Next.js / React build
 .next/
 out/
