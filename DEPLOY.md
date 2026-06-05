@@ -74,8 +74,11 @@ nano .env.prod
 ```
 Fill in **strong** values. Generate secrets with:
 ```bash
-openssl rand -base64 32   # use for JWT_SECRET (and a strong POSTGRES_PASSWORD)
+openssl rand -hex 32      # POSTGRES_PASSWORD — hex is URL-safe (goes into DATABASE_URL)
+openssl rand -base64 32   # JWT_SECRET — any chars are fine here
 ```
+> ⚠️ Use **hex** for `POSTGRES_PASSWORD`. A `/`, `+` or `:` from base64 will break
+> the `postgresql://user:PASSWORD@db:5432/...` connection string.
 Required values:
 ```ini
 POSTGRES_USER=pomodoro
@@ -158,4 +161,5 @@ echo '/swapfile none swap sw 0 0' >> /etc/fstab
 | `backend` restarts | Check `logs backend`; usually a missing/short `JWT_SECRET` or DB not ready |
 | 502 from `/api` or `/stats-api` | That service is still starting or crashed — check its logs |
 | Stats endpoints 500 | DB connection — ensure stats `DATABASE_URL` has **no** `?schema=public` |
+| backend `P1013 invalid port` / stats `invalid port after host` | `POSTGRES_PASSWORD` contains URL-reserved chars (`/ + :`). Regenerate with `openssl rand -hex 32`, then recreate the DB volume: `down` → `docker volume rm <project>_pg_data` → `up -d` |
 | Build OOM on small Droplet | Add swap (§9) or build images in CI and pull them |

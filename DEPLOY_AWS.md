@@ -92,7 +92,12 @@ cd pomodoro-app
 cp .env.prod.example .env.prod
 nano .env.prod
 ```
-Generate strong secrets with `openssl rand -base64 32`. Fill:
+Generate secrets — **use hex for the DB password** (URL-safe), base64 is fine for JWT:
+```bash
+openssl rand -hex 32      # POSTGRES_PASSWORD (avoids /+: that break DATABASE_URL)
+openssl rand -base64 32   # JWT_SECRET
+```
+Fill:
 ```ini
 POSTGRES_USER=pomodoro
 POSTGRES_PASSWORD=<long-random>
