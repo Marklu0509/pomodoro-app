@@ -4,11 +4,11 @@
 > **這份檔案是工作的單一事實來源（source of truth）**。每完成一項就更新 checkbox、Phase 狀態與「進度日誌」。
 
 - **建立日期**：2026-06-03
-- **最後更新**：2026-06-05
+- **最後更新**：2026-06-05（已上線）
 - **部署平台（已選定）**：DigitalOcean Droplet + Docker Compose + Nginx
 - **擴充方案（已選定）**：方案 B — 背景優先 MV3 擴充（WXT + React/TS）
 - **語言策略（已選定）**：TS 為底盤；新增一個聚焦的 **Go 微服務**（stats 分析），非整個後端重寫
-- **整體狀態**：🟢 Phase 0–3 + 5 完成、Phase 4 runbook 已備（待使用者上線）；里程碑 M1（網頁版可上線）達成、M2（README/CI）達成。下一步：使用者照 DEPLOY.md 上線，或進 Phase 6（擴充）
+- **整體狀態**：🟢 Phase 0–5 完成、**已正式上線 https://pomodoro.marklu.page (AWS EC2)**。M1（網頁上線）+ M2（README/CI）達成。下一步：Phase 6（Chrome 擴充）或 Phase 7（邏輯優化）+ 設定每日 DB 備份
 - **組件功能說明**：見 [`COMPONENTS.md`](./COMPONENTS.md)
 
 ---
@@ -97,15 +97,16 @@
 - [x] **3.3** 三條路徑同源皆通（本機 http://localhost 驗證 `/`、`/api/...`、`/stats-api/...` 全 200）
   - ⏳ 待辦：在 Droplet 設 `DOMAIN=真網域`，驗證自動 HTTPS（Phase 4）
 
-## Phase 4 — 開 Droplet 並上線
+## Phase 4 — 上線（AWS EC2）✅
 
-> 狀態：🟡 Runbook 已備（`DEPLOY.md`）；實際上線需使用者操作 DO 帳號 + 網域 DNS
+> 狀態：✅ 完成（2026-06-05）— **正式上線 https://pomodoro.marklu.page**（改用 AWS 免費層而非 DO）
 
-- [x] **4.0** 寫 `DEPLOY.md` 部署手冊（建 Droplet → DNS A record → ufw → Docker → clone → `.env.prod` → up → 驗證 → 更新 → 每日 pg_dump 備份 → 1GB swap → 疑難排解）
-- [ ] **4.1** 建 Ubuntu Droplet、裝 Docker + Compose、設防火牆（22/80/443）← 待使用者
-- [ ] **4.2** clone、填 `.env.prod`（`DOMAIN=真網域`）、`docker compose ... up -d --build` ← 待使用者
-- [ ] **4.3** Caddy 自動簽 TLS（DNS 指對後自動）← 待使用者
-- [ ] **4.4** 生產冒煙測試（同本機已驗證的流程）← 待使用者
+- [x] **4.0** 寫 `DEPLOY.md`（DO）+ `DEPLOY_AWS.md`（AWS：EC2 + Security Group + Elastic IP + swap）部署手冊
+- [x] **4.1** 建 Ubuntu 24.04 EC2 (t-micro/1GB) + 2GB swap + 裝 Docker；Security Group 開 22/80/443
+- [x] **4.2** Elastic IP 關聯 instance、DNS A record `pomodoro.marklu.page` → EIP、clone、填 `.env.prod`、`up -d --build`
+- [x] **4.3** Caddy 自動簽 Let's Encrypt 憑證（效期到 2026-09-03，自動續期）
+- [x] **4.4** 外部驗證：HTTPS 200、`/stats-api/health` 200、HTTP→HTTPS 308 轉址
+- **上線踩雷紀錄（已修進文件）**：① `POSTGRES_PASSWORD` 含 `/+:` 破壞 DATABASE_URL → 改 `openssl rand -hex 32` ② Elastic IP 只 allocate 沒 associate → 外部逾時 ③ Security Group / EIP 關聯後 public IP 改變、SSH 要用新 IP + `-i` 金鑰
 
 ## Phase 5 — 讓 README 誠實 + CI
 
@@ -218,6 +219,7 @@ bcrypt 雜湊、JWT、ownership 檢查、`@Delete('all')` 路由順序、transac
 | 2026-06-05 | **Phase 1 完成**：`stats-service/` Go 微服務（chi+golang-jwt+pgx，分層、單次 GROUP BY+時區、distroless Dockerfile、README）；前端改打 `/stats-api`+tz。go test/vet/build 綠、前端 tsc 綠 | P1 全部 |
 | 2026-06-05 | **Phase 2 完成 + Phase 3 大致完成**：5 個 Dockerfile/compose/Caddyfile/.env.prod.example；本機實際 build+up，端到端冒煙測試全通過（跨服務 JWT + 共用 DB 寫讀驗證）。修了 3 個雷：Prisma/Alpine openssl、dist/src/main 路徑、pgx 不吃 ?schema=public | P2 全部、P3.1–3.3 |
 | 2026-06-05 | **Phase 4 runbook + Phase 5 完成**：`DEPLOY.md` 部署手冊（含每日備份/swap/疑難排解）；重寫 `Readme.md` 對齊實際；`ci.yml` 三線 CI。三條 CI 本機驗證全綠 | P4.0、P5 全部 |
+| 2026-06-05 | **🎉 正式上線 AWS EC2**：https://pomodoro.marklu.page，Let's Encrypt 自動 HTTPS。修了 3 個上線雷（hex 密碼、EIP associate、SG/SSH 新 IP）。新增 `DEPLOY_AWS.md` | P4 全部 |
 
 ---
 
