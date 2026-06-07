@@ -126,9 +126,14 @@ export default function App() {
     <div className="card">
       <div className="row">
         <h1 className="brand">FocusFlow</h1>
-        <button className="ghost" onClick={handleLogout}>
-          Logout
-        </button>
+        <div className="header-actions">
+          <button className="ghost" onClick={() => chrome.runtime.openOptionsPage()}>
+            Settings
+          </button>
+          <button className="ghost" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
       <p className="phase">{state ? PHASE_LABEL[state.phase] : ""}</p>

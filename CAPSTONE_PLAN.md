@@ -126,7 +126,7 @@
 - [x] **6.5** 徽章倒數（剩餘分鐘）+ `chrome.notifications` 完成提醒
 - [x] **6.6** ★ 專注時封鎖分心網站：`declarativeNetRequest` 動態規則（main_frame redirect → blocked.html），`syncBlocking` 跟著 `running && WORK`，休息/停止/暫停自動解除；預設清單 FB/YT/X/Reddit/IG/TikTok（host_permissions + web_accessible_resources）
 - [ ] **6.7** Session 同步：目前 WORK 完成會 POST `/api/sessions`（best-effort）；待補**離線排隊**重送
-- [ ] **6.8** Options page：focus modes / 設定
+- [x] **6.8** Options page：自訂 focus/short-break 時長 + 封鎖清單（存 chrome.storage）；popup 加 Settings 連結；`SETTINGS_CHANGED` 訊息讓 idle 時即時套用；start/reset 讀最新設定
 - [x] **6.9** 後端 CORS 已放行 `chrome-extension://`（Phase 0.4 已做）
 - [ ] **6.10** 權限最小化；以 unpacked 載入做 demo（上架選做）
   - 驗收：裝上擴充 → 登入 → 開始專注 → 徽章倒數 + 指定網站被封 → 結束後 session 出現在網頁版統計

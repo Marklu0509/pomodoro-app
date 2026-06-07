@@ -31,4 +31,5 @@ export type Message =
   | { type: "GET_STATE" }
   | { type: "START" }
   | { type: "PAUSE" }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "SETTINGS_CHANGED" };

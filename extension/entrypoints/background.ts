@@ -1,6 +1,7 @@
 import { DEFAULT_STATE, type TimerState, type Message } from "@/lib/types";
 import { postSession } from "@/lib/api";
 import { enableBlocking, disableBlocking } from "@/lib/blocking";
+import { getSettings } from "@/lib/settings";
 
 /** Block distracting sites only while actively focusing. */
 async function syncBlocking(state: TimerState): Promise<void> {
@@ -57,8 +58,11 @@ async function start(): Promise<TimerState> {
   const state = await loadState();
   if (state.running) return viewState(state);
 
-  // Starting from idle begins a WORK phase.
+  // Starting from idle begins a WORK phase using the latest user settings.
   if (state.phase === "IDLE") {
+    const settings = await getSettings();
+    state.workMin = settings.workMin;
+    state.shortBreakMin = settings.shortBreakMin;
     state.phase = "WORK";
     state.remainingMs = state.workMin * 60 * 1000;
   }
@@ -87,14 +91,33 @@ async function pause(): Promise<TimerState> {
   return viewState(state);
 }
 
+/** Apply changed settings right away when the timer is idle (not mid-session). */
+async function applySettingsIfIdle(): Promise<TimerState> {
+  const state = await loadState();
+  if (state.running || state.phase !== "IDLE") return viewState(state);
+  const settings = await getSettings();
+  const next: TimerState = {
+    ...state,
+    workMin: settings.workMin,
+    shortBreakMin: settings.shortBreakMin,
+    remainingMs: settings.workMin * 60 * 1000,
+  };
+  await saveState(next);
+  await updateBadge(next);
+  return viewState(next);
+}
+
 async function reset(): Promise<TimerState> {
   const state = await loadState();
+  const settings = await getSettings();
   const next: TimerState = {
     ...state,
     phase: "IDLE",
     running: false,
     endsAt: null,
-    remainingMs: state.workMin * 60 * 1000,
+    workMin: settings.workMin,
+    shortBreakMin: settings.shortBreakMin,
+    remainingMs: settings.workMin * 60 * 1000,
   };
   await clearAlarms();
   await saveState(next);
@@ -166,6 +189,9 @@ export default defineBackground(() => {
           break;
         case "RESET":
           sendResponse(await reset());
+          break;
+        case "SETTINGS_CHANGED":
+          sendResponse(await applySettingsIfIdle());
           break;
         case "GET_STATE":
         default:
