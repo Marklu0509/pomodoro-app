@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getToken, clearToken, login, getTodayMinutes } from "@/lib/api";
 import { type TimerState, type Message } from "@/lib/types";
 
