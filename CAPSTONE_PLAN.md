@@ -117,18 +117,18 @@
 
 ## Phase 6 — Chrome 擴充功能（方案 B：背景優先 MV3 + WXT）
 
-> 狀態：⬜ 未開始　|　目錄：`extension/`
+> 狀態：🟡 進行中（2026-06-07，分支 `feat/extension`；核心 build+tsc 綠）　|　目錄：`extension/`
 
-- [ ] **6.1** WXT + React + TS 專案骨架；抽共用 TS 型別（與 web 對齊）
-- [ ] **6.2** Popup UI（計時顯示、開始/暫停/停止、今日進度）
-- [ ] **6.3** Service worker 計時器：`chrome.alarms` + `chrome.storage.local` 存「結束時間戳」（背景常駐、休眠安全）
-- [ ] **6.4** Auth：popup 登入表單打 `/api/auth/login`，token 存 `chrome.storage.local`
-- [ ] **6.5** 工具列徽章倒數 + `chrome.notifications` 完成提醒
-- [ ] **6.6** ★ 專注時封鎖分心網站：`declarativeNetRequest` 動態規則，休息/停止時解除
-- [ ] **6.7** Session 同步：結束時 POST `/api/sessions`，離線排隊、恢復連線補送
+- [x] **6.1** WXT + React + TS 骨架（`wxt.config.ts` 權限/icons、`lib/` 型別與 api、icons）
+- [x] **6.2** Popup UI（phase 標籤、mm:ss、Start/Pause/Reset、今日分鐘）
+- [x] **6.3** Service worker 計時引擎：`chrome.alarms`(phaseEnd+badge) + `chrome.storage` 存 `endsAt` 時間戳（休眠安全）
+- [x] **6.4** Auth：popup 登入打 `/api/auth/login`，token 存 `chrome.storage.local`，`authedFetch` 帶 token
+- [x] **6.5** 徽章倒數（剩餘分鐘）+ `chrome.notifications` 完成提醒
+- [ ] **6.6** ★ 專注時封鎖分心網站：`declarativeNetRequest` 動態規則，休息/停止時解除 ← 下一步
+- [ ] **6.7** Session 同步：目前 WORK 完成會 POST `/api/sessions`（best-effort）；待補**離線排隊**重送
 - [ ] **6.8** Options page：focus modes / 設定
-- [ ] **6.9** 後端 CORS 正式加入 `chrome-extension://<實際 id>`（呼應 0.4）
-- [ ] **6.10** `web_accessible_resources` / 權限最小化；以 unpacked 載入做 demo（上架 Chrome Web Store 為選做）
+- [x] **6.9** 後端 CORS 已放行 `chrome-extension://`（Phase 0.4 已做）
+- [ ] **6.10** 權限最小化；以 unpacked 載入做 demo（上架選做）
   - 驗收：裝上擴充 → 登入 → 開始專注 → 徽章倒數 + 指定網站被封 → 結束後 session 出現在網頁版統計
 
 ## Phase 7 — 邏輯優化（選做，面試加分）
