@@ -221,6 +221,7 @@ bcrypt 雜湊、JWT、ownership 檢查、`@Delete('all')` 路由順序、transac
 | 2026-06-05 | **Phase 4 runbook + Phase 5 完成**：`DEPLOY.md` 部署手冊（含每日備份/swap/疑難排解）；重寫 `Readme.md` 對齊實際；`ci.yml` 三線 CI。三條 CI 本機驗證全綠 | P4.0、P5 全部 |
 | 2026-06-05 | **🎉 正式上線 AWS EC2**：https://pomodoro.marklu.page，Let's Encrypt 自動 HTTPS。修了 3 個上線雷（hex 密碼、EIP associate、SG/SSH 新 IP）。新增 `DEPLOY_AWS.md` | P4 全部 |
 | 2026-06-07 | **前端重構**（route group `(app)`、合併 Dashboard+Focus 工作區、共用 layout/型別/資料 context）+ **CI/CD 自動部署**（push main → 測試 → GHCR build → SSH EC2 pull）。compose 加 image:、新增 CICD.md。已實際自動部署成功上線 | UI 重構、CI/CD |
+| 2026-06-07 | **Phase 6 完成**（WXT MV3 擴充：背景計時/徽章/通知/登入/封網站/options/離線同步）。合併 `feat/extension` → main。新增每日 DB 備份腳本 `scripts/db-backup.sh` + DEPLOY_AWS 說明 | P6 全部、備份 |
 
 ---
 

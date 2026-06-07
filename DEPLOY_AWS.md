@@ -130,7 +130,21 @@ Open the site, sign up, run a pomodoro, check stats.
 
 ## Operations
 Same as [`DEPLOY.md`](./DEPLOY.md) §9–10: update flow (`git pull` + `up -d --build`),
-logs/restart, **daily `pg_dump` backup cron**, and the troubleshooting table.
+logs/restart, and the troubleshooting table.
+
+### Daily database backup (do this once)
+A ready-made script lives at `scripts/db-backup.sh` (dumps the DB container to a
+gzip file and prunes backups older than 7 days). Install it as a cron job:
+```bash
+chmod +x ~/pomodoro-app/scripts/db-backup.sh
+~/pomodoro-app/scripts/db-backup.sh            # test once -> writes ~/backups/pomodoro-*.sql.gz
+(crontab -l 2>/dev/null; echo "0 3 * * * $HOME/pomodoro-app/scripts/db-backup.sh >> $HOME/backups/backup.log 2>&1") | crontab -
+crontab -l                                     # verify
+```
+Restore a backup:
+```bash
+gunzip -c ~/backups/pomodoro-2026-06-07_030000.sql.gz | docker exec -i pomodoro-db psql -U pomodoro -d pomodoro
+```
 
 ### AWS-specific gotchas
 | Symptom | Fix |
