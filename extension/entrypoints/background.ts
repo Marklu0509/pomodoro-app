@@ -1,7 +1,7 @@
 import { DEFAULT_STATE, type TimerState, type Message } from "@/lib/types";
-import { postSession } from "@/lib/api";
 import { enableBlocking, disableBlocking } from "@/lib/blocking";
 import { getSettings } from "@/lib/settings";
+import { recordSession, flushQueue } from "@/lib/sync";
 
 /** Block distracting sites only while actively focusing. */
 async function syncBlocking(state: TimerState): Promise<void> {
@@ -12,6 +12,7 @@ async function syncBlocking(state: TimerState): Promise<void> {
 const STATE_KEY = "timerState";
 const ALARM_PHASE_END = "phaseEnd";
 const ALARM_BADGE = "badge";
+const ALARM_FLUSH = "flush";
 
 async function loadState(): Promise<TimerState> {
   const { [STATE_KEY]: s } = await chrome.storage.local.get(STATE_KEY);
@@ -55,6 +56,7 @@ async function clearAlarms(): Promise<void> {
 }
 
 async function start(): Promise<TimerState> {
+  void flushQueue(); // good moment to retry queued sessions (likely online)
   const state = await loadState();
   if (state.running) return viewState(state);
 
@@ -140,12 +142,8 @@ async function handlePhaseEnd(): Promise<void> {
   const state = await loadState();
 
   if (state.phase === "WORK") {
-    // Record the completed focus session (best-effort).
-    try {
-      await postSession(state.workMin * 60, state.taskId);
-    } catch (e) {
-      console.error("session sync failed", e);
-    }
+    // Record the completed focus session; queues for retry if offline.
+    await recordSession(state.workMin * 60, state.taskId);
     await notify("Focus complete 🍅", "Time for a short break.");
     state.phase = "SHORT_BREAK";
     state.remainingMs = state.shortBreakMin * 60 * 1000;
@@ -166,6 +164,11 @@ async function handlePhaseEnd(): Promise<void> {
 
 // --- wiring ---
 export default defineBackground(() => {
+  // Service worker just woke up: retry any queued sessions + ensure the
+  // periodic flush alarm exists.
+  chrome.alarms.create(ALARM_FLUSH, { periodInMinutes: 5 });
+  void flushQueue();
+
   chrome.runtime.onInstalled.addListener(async () => {
     const state = await loadState();
     await saveState(state);
@@ -176,6 +179,7 @@ export default defineBackground(() => {
   chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === ALARM_PHASE_END) await handlePhaseEnd();
     else if (alarm.name === ALARM_BADGE) await updateBadge(await loadState());
+    else if (alarm.name === ALARM_FLUSH) await flushQueue();
   });
 
   chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {

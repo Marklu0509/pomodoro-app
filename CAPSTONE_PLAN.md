@@ -117,7 +117,7 @@
 
 ## Phase 6 — Chrome 擴充功能（方案 B：背景優先 MV3 + WXT）
 
-> 狀態：🟡 進行中（2026-06-07，分支 `feat/extension`；核心 build+tsc 綠）　|　目錄：`extension/`
+> 狀態：✅ 完成（2026-06-07，分支 `feat/extension`；build+tsc 綠、實機測試 popup/計時/徽章/封網站/設定皆通）　|　目錄：`extension/`
 
 - [x] **6.1** WXT + React + TS 骨架（`wxt.config.ts` 權限/icons、`lib/` 型別與 api、icons）
 - [x] **6.2** Popup UI（phase 標籤、mm:ss、Start/Pause/Reset、今日分鐘）
@@ -125,7 +125,7 @@
 - [x] **6.4** Auth：popup 登入打 `/api/auth/login`，token 存 `chrome.storage.local`，`authedFetch` 帶 token
 - [x] **6.5** 徽章倒數（剩餘分鐘）+ `chrome.notifications` 完成提醒
 - [x] **6.6** ★ 專注時封鎖分心網站：`declarativeNetRequest` 動態規則（main_frame redirect → blocked.html），`syncBlocking` 跟著 `running && WORK`，休息/停止/暫停自動解除；預設清單 FB/YT/X/Reddit/IG/TikTok（host_permissions + web_accessible_resources）
-- [ ] **6.7** Session 同步：目前 WORK 完成會 POST `/api/sessions`（best-effort）；待補**離線排隊**重送
+- [x] **6.7** Session 離線同步：`lib/sync.ts` 失敗就排進 `pendingSessions` 佇列；`flushQueue` 在 SW 啟動、每 5 分鐘 alarm、按 Start 時自動補送
 - [x] **6.8** Options page：自訂 focus/short-break 時長 + 封鎖清單（存 chrome.storage）；popup 加 Settings 連結；`SETTINGS_CHANGED` 訊息讓 idle 時即時套用；start/reset 讀最新設定
 - [x] **6.9** 後端 CORS 已放行 `chrome-extension://`（Phase 0.4 已做）
 - [ ] **6.10** 權限最小化；以 unpacked 載入做 demo（上架選做）
