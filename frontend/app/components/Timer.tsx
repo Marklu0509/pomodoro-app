@@ -114,6 +114,13 @@ export default function Timer({
 
   const currentColor = status === "WORK" ? "#1e293b" : "#475569";
 
+  // Human-friendly labels for display (internal status values stay unchanged).
+  const statusLabel: Record<typeof status, string> = {
+    WORK: "Focus",
+    SHORT_BREAK: "Short Break",
+    LONG_BREAK: "Long Break",
+  };
+
   return (
     <div className="glass-card p-8 rounded-[3rem] flex flex-col items-center relative transition-all duration-500 overflow-hidden">
       
@@ -158,8 +165,8 @@ export default function Timer({
         </div>
       )}
 
-      <div className="glass-pill px-6 py-2 text-[10px] font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-300 uppercase mb-6 text-center line-clamp-2">
-        {taskName} <span className="mx-2 opacity-30">/</span> {status}
+      <div className="glass-pill px-6 py-2 text-xs font-semibold tracking-[0.15em] text-slate-500 dark:text-slate-300 mb-6 text-center line-clamp-2">
+        {taskName} <span className="mx-2 opacity-30">/</span> {statusLabel[status]}
       </div>
 
       <div className="relative w-64 h-64 mb-10">
