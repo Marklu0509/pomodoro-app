@@ -124,7 +124,7 @@
 - [x] **6.3** Service worker 計時引擎：`chrome.alarms`(phaseEnd+badge) + `chrome.storage` 存 `endsAt` 時間戳（休眠安全）
 - [x] **6.4** Auth：popup 登入打 `/api/auth/login`，token 存 `chrome.storage.local`，`authedFetch` 帶 token
 - [x] **6.5** 徽章倒數（剩餘分鐘）+ `chrome.notifications` 完成提醒
-- [ ] **6.6** ★ 專注時封鎖分心網站：`declarativeNetRequest` 動態規則，休息/停止時解除 ← 下一步
+- [x] **6.6** ★ 專注時封鎖分心網站：`declarativeNetRequest` 動態規則（main_frame redirect → blocked.html），`syncBlocking` 跟著 `running && WORK`，休息/停止/暫停自動解除；預設清單 FB/YT/X/Reddit/IG/TikTok（host_permissions + web_accessible_resources）
 - [ ] **6.7** Session 同步：目前 WORK 完成會 POST `/api/sessions`（best-effort）；待補**離線排隊**重送
 - [ ] **6.8** Options page：focus modes / 設定
 - [x] **6.9** 後端 CORS 已放行 `chrome-extension://`（Phase 0.4 已做）

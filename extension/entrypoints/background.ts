@@ -1,5 +1,12 @@
 import { DEFAULT_STATE, type TimerState, type Message } from "@/lib/types";
 import { postSession } from "@/lib/api";
+import { enableBlocking, disableBlocking } from "@/lib/blocking";
+
+/** Block distracting sites only while actively focusing. */
+async function syncBlocking(state: TimerState): Promise<void> {
+  if (state.running && state.phase === "WORK") await enableBlocking();
+  else await disableBlocking();
+}
 
 const STATE_KEY = "timerState";
 const ALARM_PHASE_END = "phaseEnd";
@@ -62,6 +69,7 @@ async function start(): Promise<TimerState> {
   await scheduleAlarms(state.endsAt);
   await saveState(state);
   await updateBadge(state);
+  await syncBlocking(state);
   return viewState(state);
 }
 
@@ -75,6 +83,7 @@ async function pause(): Promise<TimerState> {
   await clearAlarms();
   await saveState(state);
   await updateBadge(state);
+  await syncBlocking(state);
   return viewState(state);
 }
 
@@ -90,6 +99,7 @@ async function reset(): Promise<TimerState> {
   await clearAlarms();
   await saveState(next);
   await updateBadge(next);
+  await syncBlocking(next);
   return viewState(next);
 }
 
@@ -128,12 +138,16 @@ async function handlePhaseEnd(): Promise<void> {
   await clearAlarms();
   await saveState(state);
   await updateBadge(state);
+  await syncBlocking(state);
 }
 
 // --- wiring ---
 export default defineBackground(() => {
   chrome.runtime.onInstalled.addListener(async () => {
-    await saveState(await loadState());
+    const state = await loadState();
+    await saveState(state);
+    // Reconcile blocking rules with the persisted timer state on install/update.
+    await syncBlocking(state);
   });
 
   chrome.alarms.onAlarm.addListener(async (alarm) => {
