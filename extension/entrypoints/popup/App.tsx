@@ -14,7 +14,8 @@ function send(message: Message): Promise<TimerState> {
 }
 
 function format(ms: number): string {
-  const total = Math.round(ms / 1000);
+  // ceil so a fresh timer reads 25:00 (not 24:59) and never shows 25:01.
+  const total = Math.max(0, Math.ceil(ms / 1000));
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
@@ -49,12 +50,15 @@ export default function App() {
     })();
   }, [refresh]);
 
-  // tick once a second while running so the countdown is smooth
+  // Keep the displayed countdown in sync while running. Reset `now` immediately
+  // when a run starts (or endsAt changes) so the first frame isn't stale, then
+  // tick at 250ms for a smooth display.
   useEffect(() => {
     if (!state?.running) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
-  }, [state?.running]);
+  }, [state?.running, state?.endsAt]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
