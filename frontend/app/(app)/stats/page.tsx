@@ -3,9 +3,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { statsApi, getClientTimezone } from "../../utils/api";
-import Navbar from "../components/Navbar";
-import HeatmapSection from "../components/HeatmapSection";
+import { statsApi, getClientTimezone } from "@/utils/api";
+import HeatmapSection from "@/app/components/HeatmapSection";
 
 interface WeeklyPoint {
   date: string;
@@ -61,8 +60,7 @@ export default function StatsPage() {
   if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-200">Loading stats...</div>;
 
   return (
-    <div className="min-h-screen transition-colors duration-500">
-      <Navbar />
+    <div className="transition-colors duration-500">
       <main className="max-w-6xl mx-auto p-8 space-y-8">
         <header className="glass-card rounded-[2.5rem] p-8 md:p-10">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">

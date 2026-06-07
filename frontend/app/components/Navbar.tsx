@@ -13,13 +13,12 @@ export default function Navbar() {
         <div className="flex items-center gap-8">
           <button
             className="text-xl font-display tracking-tight text-slate-900 dark:text-white"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/focus")}
           >
             POMO<span className="text-slate-500 dark:text-slate-300">.</span>
           </button>
           <div className="hidden md:flex gap-6">
             {[
-              { label: "Dashboard", href: "/dashboard" },
               { label: "Focus", href: "/focus" },
               { label: "Stats", href: "/stats" },
               { label: "Settings", href: "/settings" },

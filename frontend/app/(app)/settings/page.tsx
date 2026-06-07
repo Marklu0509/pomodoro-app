@@ -2,8 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "../../utils/api";
-import Navbar from "../components/Navbar";
+import api from "@/utils/api";
 
 /**
  * Interface representing the Focus Profile.
@@ -87,9 +86,7 @@ export default function SettingsPage() {
   if (isLoading) return <div className="p-8 text-center text-slate-500 dark:text-slate-200 font-semibold animate-pulse">Initializing...</div>;
 
   return (
-    <div className="min-h-screen transition-colors duration-500">
-      <Navbar />
-      
+    <div className="transition-colors duration-500">
       <div className="max-w-6xl mx-auto p-8 flex flex-col lg:flex-row gap-8">
         
         {/* Sidebar: Profile Selection List */}

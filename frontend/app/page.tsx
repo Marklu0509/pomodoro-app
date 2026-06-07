@@ -46,8 +46,8 @@ export default function AuthPage() {
       const token = response.data.accessToken;
       localStorage.setItem("token", token);
 
-      // move to dashboard
-      router.push("/dashboard");
+      // move to the focus workspace
+      router.push("/focus");
       
     } catch (err: unknown) {
       // P0.1/0.2: surface the real cause (timeout / network / server message)

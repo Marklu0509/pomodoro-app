@@ -2,22 +2,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import api from "../../utils/api";
-
-interface FocusMode {
-  id: number;
-  name: string;
-  workDuration: number;
-  shortBreakDuration: number;
-  longBreakDuration: number;
-  ambientVolume: number;
-  ambientSound: string;
-  alarmSound: string;
-  alertAt25Percent: boolean;
-  musicUrl: string | null;
-  musicType: string;
-  theme: string;
-}
+import api from "@/utils/api";
+import { FocusMode } from "@/app/types/focus-mode";
 
 interface TimerProps {
   taskId: number | null;
