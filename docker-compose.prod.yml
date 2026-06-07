@@ -23,6 +23,8 @@ services:
 
   backend:
     build: ./backend
+    # CI pushes this image to GHCR; EC2 `docker compose pull` uses it (no local build).
+    image: ghcr.io/marklu0509/pomodoro-backend:latest
     container_name: pomodoro-backend
     restart: unless-stopped
     environment:
@@ -39,6 +41,7 @@ services:
 
   stats-service:
     build: ./stats-service
+    image: ghcr.io/marklu0509/pomodoro-stats:latest
     container_name: pomodoro-stats
     restart: unless-stopped
     environment:
@@ -54,6 +57,7 @@ services:
 
   frontend:
     build: ./frontend
+    image: ghcr.io/marklu0509/pomodoro-frontend:latest
     container_name: pomodoro-frontend
     restart: unless-stopped
     environment:
