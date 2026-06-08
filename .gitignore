@@ -49,3 +49,6 @@ coverage/
 
 # Codex
 .codex/
+
+# Local Chinese doc backups (not published)
+docs-zh/

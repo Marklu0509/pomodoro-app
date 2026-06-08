@@ -143,7 +143,7 @@ Restore example:
 gunzip -c /root/backups/pomodoro-2026-06-05.sql.gz | docker exec -i pomodoro-db psql -U pomodoro -d pomodoro
 ```
 > Later (S2 in the scaling plan): move Postgres to DO Managed Database for
-> automatic backups + failover. See COMPONENTS.md "擴充性備案".
+> automatic backups + failover. See the "Scaling roadmap" in COMPONENTS.md.
 
 ### The 1 GB Droplet build trick
 If you chose a 1 GB Droplet and `--build` gets OOM-killed, add swap once:
