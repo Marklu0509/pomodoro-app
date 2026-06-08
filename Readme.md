@@ -26,6 +26,14 @@ DevOps practices end to end:
 See [`COMPONENTS.md`](./COMPONENTS.md) for a component-by-component breakdown and
 [`DEPLOY.md`](./DEPLOY.md) for the deployment runbook.
 
+### ✨ Features
+* **Pomodoro timer** with focus/short-break cycles and a live progress ring.
+* **Tasks** — create tasks, link focus sessions to them, track 🍅 progress.
+* **Analytics** — today's focus, a weekly chart, and a one-year activity heatmap.
+* **Chrome extension** — runs the timer in the background, shows a countdown
+  badge, and **blocks distracting sites while you focus**; syncs to your account.
+* **Accounts** — JWT auth; your data is shared between the web app and extension.
+
 ---
 
 ### 🛠 Tech Stack
@@ -117,7 +125,7 @@ graph TD
 
     Browser[Web (Next.js) + Chrome Extension]:::client
 
-    subgraph Host ["DigitalOcean Droplet"]
+    subgraph Host ["AWS EC2 instance"]
         subgraph DockerNetwork ["Docker network"]
             direction TB
             Caddy[Caddy Reverse Proxy<br/>80/443 · auto HTTPS]:::proxy
