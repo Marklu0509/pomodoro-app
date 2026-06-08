@@ -1,13 +1,36 @@
 :root {
   color-scheme: light dark;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Light theme (default) */
+  --bg: #ffffff;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --surface: #f1f5f9;
+  --border: #e2e8f0;
+  --primary-bg: #0f172a;
+  --primary-fg: #ffffff;
+  --danger: #e11d48;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --fg: #e2e8f0;
+    --muted: #94a3b8;
+    --surface: #1e293b;
+    --border: #334155;
+    --primary-bg: #e2e8f0;
+    --primary-fg: #0f172a;
+    --danger: #fb7185;
+  }
 }
 
 body {
   margin: 0;
   width: 300px;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .card {
@@ -41,7 +64,7 @@ body {
   font-size: 11px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .time {
@@ -67,19 +90,19 @@ button {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: var(--surface);
+  color: var(--fg);
 }
 
 button.primary {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--primary-bg);
+  color: var(--primary-fg);
 }
 
 button.ghost {
   flex: 0 0 auto;
   background: transparent;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 button:disabled {
@@ -96,26 +119,26 @@ button:disabled {
 .form input {
   padding: 11px;
   border-radius: 10px;
-  border: 1px solid #334155;
-  background: #1e293b;
-  color: #e2e8f0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
   font-size: 13px;
 }
 
 .link {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--muted);
   text-decoration: none;
 }
 
 .error {
   margin: 0;
   font-size: 12px;
-  color: #fb7185;
+  color: var(--danger);
 }
 
 .muted {
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .small {

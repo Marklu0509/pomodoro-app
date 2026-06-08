@@ -5,13 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stay focused — FocusFlow</title>
     <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #0f172a;
+        --muted: #475569;
+        --pill: #64748b;
+        --border: #cbd5e1;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --fg: #e2e8f0;
+          --muted: #94a3b8;
+          --pill: #64748b;
+          --border: #334155;
+        }
+      }
       html,
       body {
         margin: 0;
         height: 100%;
         font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-        background: #0f172a;
-        color: #e2e8f0;
+        background: var(--bg);
+        color: var(--fg);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -29,7 +46,7 @@
         margin: 0.5rem 0;
       }
       p {
-        color: #94a3b8;
+        color: var(--muted);
         line-height: 1.6;
       }
       .pill {
@@ -38,8 +55,8 @@
         font-size: 0.7rem;
         letter-spacing: 0.25em;
         text-transform: uppercase;
-        color: #64748b;
-        border: 1px solid #334155;
+        color: var(--pill);
+        border: 1px solid var(--border);
         border-radius: 999px;
         padding: 0.4rem 0.9rem;
       }
