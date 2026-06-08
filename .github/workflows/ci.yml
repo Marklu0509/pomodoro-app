@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ["**.md"] # docs-only commits don't rebuild/redeploy
   pull_request:
+    paths-ignore: ["**.md"]
 
 # Three independent jobs run in parallel, one per service.
 jobs:

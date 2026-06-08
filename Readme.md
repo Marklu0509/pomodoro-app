@@ -1,7 +1,14 @@
 # 🍅 FocusFlow — Full-Stack Pomodoro App
 
-> A multi-client productivity tool (web + browser extension) on a polyglot
-> microservice backend, fully containerized with automatic HTTPS.
+> A multi-client productivity tool (web + Chrome extension) on a polyglot
+> microservice backend, fully containerized with automatic HTTPS and CI/CD.
+
+**▶ Live:** https://pomodoro.marklu.page
+&nbsp;·&nbsp; ![CI](https://github.com/Marklu0509/pomodoro-app/actions/workflows/ci.yml/badge.svg)
+
+> Deployed on an AWS EC2 instance; every push to `main` auto-builds images and
+> rolls them out. The Chrome extension shares the same backend (load it from
+> `extension/`, or see [`extension/STORE_LISTING.md`](./extension/STORE_LISTING.md)).
 
 ### 📖 Introduction
 **FocusFlow** combines the **Pomodoro Technique** with task management and focus
@@ -29,15 +36,19 @@ See [`COMPONENTS.md`](./COMPONENTS.md) for a component-by-component breakdown an
 * **PostgreSQL** — relational data store (accessed via Prisma from NestJS; via pgx read-only from Go).
 * **JWT** — stateless authentication shared across both services.
 
-**Frontend**
+**Web client**
 * **Next.js** (App Router) + **React** + **TypeScript**.
 * **Tailwind CSS** for styling; **recharts** + a calendar heatmap for analytics.
-* (Planned) **Chrome extension** sharing the same backend — see `CAPSTONE_PLAN.md` Phase 6.
+
+**Chrome extension** (`extension/`)
+* **WXT + React + TypeScript**, Manifest V3 — shares the same backend.
+* Background timer via `chrome.alarms` + an end-timestamp (survives service-worker sleep); toolbar countdown badge; desktop notifications.
+* **Focus-mode site blocking** with `declarativeNetRequest`; customizable durations + block list; offline-tolerant session sync.
 
 **DevOps & Infrastructure**
 * **Docker & Docker Compose** — multi-stage builds; Go image ~20 MB.
 * **Caddy** — single entrypoint, path-based reverse proxy, **automatic HTTPS** (Let's Encrypt).
-* **GitHub Actions** — CI: lint/test/build for TypeScript + `go vet`/`go test` for Go.
+* **GitHub Actions CI/CD** — test (TS + Go) → build images → push to GHCR → SSH-deploy to EC2, on every push to `main`. See [`CICD.md`](./CICD.md).
 
 ---
 
@@ -57,12 +68,17 @@ pomodoro-app/
 ├── stats-service/                # Go analytics microservice (read-only)
 │   ├── cmd/server, internal/…    # auth (JWT) / config / stats (repo→service→handler)
 │   └── Dockerfile                # multi-stage → distroless (~20 MB)
+├── extension/                    # Chrome extension (WXT, MV3)
+│   ├── entrypoints/              # background (timer), popup, options, blocked page
+│   └── lib/                      # api / blocking / settings / sync
 ├── caddy/Caddyfile               # reverse proxy + automatic HTTPS
+├── scripts/db-backup.sh          # daily pg_dump backup (cron on the server)
 ├── docker-compose.prod.yml       # db + backend + stats-service + frontend + caddy
 ├── docker-compose.yml            # local DB only (Postgres + pgAdmin) for dev
 ├── .env.prod.example
 ├── COMPONENTS.md                 # component reference
-├── DEPLOY.md                     # DigitalOcean deployment runbook
+├── DEPLOY.md / DEPLOY_AWS.md     # deployment runbooks (DigitalOcean / AWS EC2)
+├── CICD.md                       # CI/CD pipeline docs
 └── CAPSTONE_PLAN.md              # roadmap / progress tracker
 ```
 
@@ -77,8 +93,17 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 # open http://localhost
 ```
 
-**Deploy to a server:** follow [`DEPLOY.md`](./DEPLOY.md) (DigitalOcean Droplet,
-real domain, automatic HTTPS).
+**Chrome extension (load unpacked):**
+```bash
+cd extension && npm install && npm run build
+# chrome://extensions → Developer mode → Load unpacked → extension/.output/chrome-mv3
+```
+It talks to the live backend, so sign in with a FocusFlow account and start a timer.
+
+**Deploy to a server:** follow [`DEPLOY_AWS.md`](./DEPLOY_AWS.md) (AWS EC2, used in
+production) or [`DEPLOY.md`](./DEPLOY.md) (DigitalOcean) — both give a real domain
+with automatic HTTPS. CI/CD then redeploys automatically on every push to `main`
+([`CICD.md`](./CICD.md)).
 
 ---
 
