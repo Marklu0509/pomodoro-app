@@ -1,5 +1,9 @@
 // backend/src/sessions/sessions.service.ts
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 
@@ -23,9 +27,11 @@ export class SessionsService {
       }
     }
 
-    // 2. Calculate Timestamps
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + dto.durationSeconds * 1000);
+    // 2. Real timestamps: the session just ENDED now, so it started
+    //    `durationSeconds` ago. (Previously endTime was set in the future.)
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - dto.durationSeconds * 1000);
+    const status = dto.status ?? 'COMPLETED';
 
     // 3. Database Transaction
     return this.prisma.$transaction(async (tx) => {
@@ -37,6 +43,7 @@ export class SessionsService {
           durationSeconds: dto.durationSeconds,
           startTime: startTime,
           endTime: endTime,
+          status: status,
         },
       });
 
@@ -52,12 +59,14 @@ export class SessionsService {
           },
         });
 
-        // ★ FIX: Only mark as completed if we reached the goal
-        // (Use >= just in case it somehow went over)
-        if (updatedTask.completedPomodoros >= updatedTask.estimatedPomodoros) {
+        // P7.2: keep isCompleted in sync with progress in BOTH directions, so
+        // it can flip back to false if the estimate later exceeds completed.
+        const isCompleted =
+          updatedTask.completedPomodoros >= updatedTask.estimatedPomodoros;
+        if (updatedTask.isCompleted !== isCompleted) {
           await tx.task.update({
             where: { id: dto.taskId },
-            data: { isCompleted: true },
+            data: { isCompleted },
           });
         }
       }

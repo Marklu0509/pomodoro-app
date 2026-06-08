@@ -133,11 +133,11 @@
 
 ## Phase 7 — 邏輯優化（選做，面試加分）
 
-> 狀態：⬜ 未開始
+> 狀態：✅ 程式完成（2026-06-08，分支 `feat/p7-and-store`；backend 22 測試綠）；7.3 上架待使用者操作
 
-- [ ] **7.1** session 記錄真實起訖時間與 `status`（COMPLETED / ABANDONED）— `backend/src/sessions/sessions.service.ts`
-- [ ] **7.2**（選做）任務完成狀態可逆（調高預估後取消 `isCompleted`）
-- [ ] **7.3**（選做）擴充上架 Chrome Web Store（$5 開發者費 + 審核）
+- [x] **7.1** session 記錄真實起訖時間（endTime=now、startTime=now−duration，修掉「endTime 在未來」的 bug）+ 接受可選 `status`（COMPLETED/ABANDONED，預設 COMPLETED）；DTO 加 `@IsIn`；新增 `sessions.service.spec.ts`（4 測試）
+- [x] **7.2** 任務 `isCompleted` 雙向同步（達標 true、未達標 false），且僅在值改變時才寫 DB
+- [x] **7.3 準備** 上架素材：`npm run zip` 產出 `*-chrome.zip`、`extension/PRIVACY.md`(隱私政策)、`extension/STORE_LISTING.md`(文案+權限說明+清單)。**實際上架待使用者**（$5 開發者費 + 審核）
 - 註：舊計畫的「stats 時區 / N+1」已移由 **Phase 1 的 Go 服務**處理。
 
 ---

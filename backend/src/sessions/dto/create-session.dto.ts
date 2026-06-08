@@ -1,5 +1,5 @@
 // src/sessions/dto/create-session.dto.ts
-import { IsInt, IsOptional, Min, IsPositive } from 'class-validator';
+import { IsInt, IsOptional, IsPositive, IsIn } from 'class-validator';
 
 export class CreateSessionDto {
   // The duration of the focus session in seconds (e.g., 1500 for 25 mins)
@@ -12,4 +12,9 @@ export class CreateSessionDto {
   @IsInt()
   @IsOptional()
   taskId?: number;
+
+  // P7.1: how the session ended. Defaults to COMPLETED if not provided.
+  @IsOptional()
+  @IsIn(['COMPLETED', 'ABANDONED'])
+  status?: 'COMPLETED' | 'ABANDONED';
 }
